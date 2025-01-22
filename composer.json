@@ -1,17 +1,25 @@
 {
-    "name": "904915452dm/phalcon_orm",
-    "description": "phalcon-orm",
-    "type": "library",
-    "autoload": {
-        "psr-4": {
-            "Dm\\PhalconOrm\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Liam",
-            "email": "904915452@qq.com"
-        }
-    ],
-    "require": {}
+  "name": "904915452dm/phalcon_orm",
+  "description": "phalcon-orm",
+  "type": "library",
+  "autoload": {
+    "psr-4": {
+      "Dm\\PhalconOrm\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Liam",
+      "email": "904915452@qq.com"
+    }
+  ],
+  "require": {
+    "phalcon/ide-stubs": "^5.8",
+    "ext-pdo": "*"
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  }
 }

@@ -70,7 +70,6 @@ class DbManager
     {
         return call_user_func_array([$this->connect(), $method], $args);
     }
-
     protected function newQuery(): Query
     {
         return new Query($this->connector);

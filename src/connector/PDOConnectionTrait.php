@@ -55,12 +55,11 @@ trait PDOConnectionTrait
      * 执行查询 返回数据集.
      * @param BaseQuery $query 查询对象
      * @param mixed $sql sql指令
-     * @param bool $master 主库读取
      * @return array
      * @throws DbException
      * @throws Throwable
      */
-    protected function pdoQuery(BaseQuery $query, $sql, bool $master = null): array
+    protected function pdoQuery(BaseQuery $query, $sql): array
     {
         // 分析查询表达式
         $query->parseOptions();
@@ -390,5 +389,140 @@ trait PDOConnectionTrait
             PDO::CASE_NATURAL => $info,
             default => $info,
         };
+    }
+
+    /**
+     * 获取数据表字段信息.
+     * @param mixed $tableName 数据表名
+     * @return array
+     */
+    public function getTableFields($tableName): array
+    {
+        return $this->getTableInfo($tableName, 'fields');
+    }
+
+    /**
+     * 得到某个字段的值
+     * @param BaseQuery $query 查询对象
+     * @param string $field 字段名
+     * @param mixed $default 默认值
+     * @param bool $one 返回一个值
+     * @return mixed
+     * @throws DbException
+     * @throws Throwable
+     */
+    public function value(BaseQuery $query, string $field, $default = null, bool $one = true)
+    {
+        $options = $query->parseOptions();
+
+        if (isset($options['field'])) {
+            $query->removeOption('field');
+        }
+
+        if (isset($options['group'])) {
+            $query->group('');
+        }
+
+        $query->setOption('field', (array)$field);
+
+        // 生成查询SQL
+        $sql = $this->builder->select($query, $one);
+
+        if (isset($options['field'])) {
+            $query->setOption('field', $options['field']);
+        } else {
+            $query->removeOption('field');
+        }
+
+        if (isset($options['group'])) {
+            $query->setOption('group', $options['group']);
+        }
+
+        // 执行查询操作
+        $pdo = $this->getPDOStatement($sql, $query->getBind());
+        $result = $pdo->fetchColumn();
+        $result = false !== $result ? $result : $default;
+
+        return $result;
+    }
+
+    /**
+     * 得到某个列的数组.
+     * @param BaseQuery $query 查询对象
+     * @param string|array $column 字段名 多个字段用逗号分隔
+     * @param string $key 索引
+     * @return array
+     * @throws DbException
+     * @throws Throwable
+     */
+    public function column(BaseQuery $query, string | array $column, string $key = ''): array
+    {
+        $options = $query->parseOptions();
+
+        if (isset($options['field'])) {
+            $query->removeOption('field');
+        }
+
+        if (empty($key) || trim($key) === '') {
+            $key = null;
+        }
+
+        if (is_string($column)) {
+            $column = trim($column);
+            if ('*' !== $column) {
+                $column = array_map('trim', explode(',', $column));
+            }
+        } elseif (in_array('*', $column)) {
+            $column = '*';
+        }
+
+        $field = $column;
+        if ('*' !== $column && $key && !in_array($key, $column)) {
+            $field[] = $key;
+        }
+
+        $query->setOption('field', (array) $field);
+
+        // 生成查询SQL
+        $sql = $this->builder->select($query);
+
+        if (isset($options['field'])) {
+            $query->setOption('field', $options['field']);
+        } else {
+            $query->removeOption('field');
+        }
+
+        // 执行查询操作
+        $pdo       = $this->getPDOStatement($sql, $query->getBind(), $options['master']);
+        $resultSet = $pdo->fetchAll(PDO::FETCH_ASSOC);
+
+        if (is_string($key) && str_contains($key, '.')) {
+            [$alias, $key] = explode('.', $key);
+        }
+
+        if (empty($resultSet)) {
+            $result = [];
+        } elseif ('*' !== $column && count($column) === 1) {
+            $column = array_shift($column);
+            if (str_contains($column, ' ')) {
+                $column = substr(strrchr(trim($column), ' '), 1);
+            }
+
+            if (str_contains($column, '.')) {
+                [$alias, $column] = explode('.', $column);
+            }
+
+            if (str_contains($column, '->')) {
+                $column = $this->builder->parseKey($query, $column);
+            }
+
+            $result = array_column($resultSet, $column, $key);
+        } elseif ($key) {
+            $result = array_column($resultSet, null, $key);
+        } else {
+            $result = $resultSet;
+        }
+
+        return $result;
     }
 }

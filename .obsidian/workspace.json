@@ -163,5 +163,7 @@
     }
   },
   "active": "5f09b52c62a793c7",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "src/concern/JoinAndViewQuery.php"
+  ]
 }

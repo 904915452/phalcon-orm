@@ -24,11 +24,28 @@ class TestModel extends OrmModel
     }
 }
 
+/**
+ * 用于写入
+ * 除了查询操作之外，field方法还有一个非常重要的安全功能--字段合法性检测。
+ */
+
+
+/**
+ * 如果用于insertAll方法的话，则可以分批多次写入，每次最多写入limit方法指定的数量。
+ *
+ * Db::table('user')
+ * ->limit(100)
+ * ->insertAll($userList);
+ */
+
+/**
+ * cache方法 可以缓存查询结果，下次查询时直接从缓存中读取，而不需要再次查询数据库。
+ */
+
 
 // 模拟配置文件连接数据库
 $di = new FactoryDefault();
 $mysql1 = $di->setShared('db', function () {
-//    $class = 'Phalcon\Db\Adapter\Pdo\Mysql';
     $class = 'Dm\PhalconOrm\connector\Mysql';
     $params = [
         'host' => 'host.docker.internal',
@@ -41,16 +58,15 @@ $mysql1 = $di->setShared('db', function () {
     return new $class($params);
 });
 
+
 // 实例
 $model = new TestModel;
+//
 
-// 索引数组
-$data = $model->where([
-    ["score", ">", "80"],
-    ["subject", "=", "数学"]
-])->select();
+$db = new \Dm\PhalconOrm\DbManager();
+$db->setConnector($di->getShared('db'));
 
-//$data = $model->db()->table("test")->select();
+$data = $db->table("student_score")->fetchSql()->column("subject");
 
 var_dump($data);
 exit;

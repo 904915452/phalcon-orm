@@ -1,6 +1,21 @@
 <?php
 namespace Dm\PhalconOrm\concern;
 trait TableFieldInfo{
+
+    /**
+     * 获取数据表字段信息.
+     * @param string $tableName 数据表名
+     * @return array
+     */
+    public function getTableFields(string $tableName = ''): array
+    {
+        if ('' == $tableName) {
+            $tableName = $this->getTable();
+        }
+
+        return $this->connection->getTableFields($tableName);
+    }
+
     /**
      * 获取字段类型信息.
      *

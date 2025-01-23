@@ -13,7 +13,7 @@ class Fetch
 {
     /**
      * Connection对象
-     * @var Connection
+     * @var
      */
     protected $connection;
 
@@ -36,10 +36,8 @@ class Fetch
 
     /**
      * 聚合查询.
-     *
      * @param string $aggregate 聚合方法
      * @param string $field     字段名
-     *
      * @return string
      */
     protected function aggregate(string $aggregate, string $field): string
@@ -53,12 +51,11 @@ class Fetch
 
     /**
      * 得到某个字段的值
-     *
-     * @param string $field   字段名
-     * @param mixed  $default 默认值
-     * @param bool   $one
-     *
+     * @param string $field 字段名
+     * @param mixed $default 默认值
+     * @param bool $one
      * @return string
+     * @throws \Exception
      */
     public function value(string $field, $default = null, bool $one = true): string
     {
@@ -84,11 +81,10 @@ class Fetch
 
     /**
      * 得到某个列的数组.
-     *
      * @param string $field 字段名 多个字段用逗号分隔
-     * @param string $key   索引
-     *
+     * @param string $key 索引
      * @return string
+     * @throws \Exception
      */
     public function column(string $field, string $key = ''): string
     {
@@ -120,9 +116,7 @@ class Fetch
 
     /**
      * 插入记录.
-     *
      * @param array $data 数据
-     *
      * @return string
      */
     public function insert(array $data = []): string
@@ -140,9 +134,7 @@ class Fetch
 
     /**
      * 插入记录并获取自增ID.
-     *
      * @param array $data 数据
-     *
      * @return string
      */
     public function insertGetId(array $data = []): string
@@ -152,11 +144,10 @@ class Fetch
 
     /**
      * 保存数据 自动判断insert或者update.
-     *
-     * @param array $data        数据
-     * @param bool  $forceInsert 是否强制insert
-     *
+     * @param array $data 数据
+     * @param bool $forceInsert 是否强制insert
      * @return string
+     * @throws Exception
      */
     public function save(array $data = [], bool $forceInsert = false): string
     {
@@ -179,10 +170,8 @@ class Fetch
 
     /**
      * 批量插入记录.
-     *
      * @param array $dataSet 数据集
      * @param int   $limit   每次写入数据限制
-     *
      * @return string
      */
     public function insertAll(array $dataSet = [], int $limit = null): string
@@ -217,11 +206,10 @@ class Fetch
 
     /**
      * 通过Select方式插入记录.
-     *
-     * @param array  $fields 要插入的数据表字段名
-     * @param string $table  要插入的数据表名
-     *
+     * @param array $fields 要插入的数据表字段名
+     * @param string $table 要插入的数据表名
      * @return string
+     * @throws \Exception
      */
     public function selectInsert(array $fields, string $table): string
     {
@@ -238,6 +226,7 @@ class Fetch
      * @param mixed $data 数据
      *
      * @return string
+     * @throws Exception
      */
     public function update(array $data = []): string
     {
@@ -282,10 +271,9 @@ class Fetch
 
     /**
      * 删除记录.
-     *
      * @param mixed $data 表达式 true 表示强制删除
-     *
      * @return string
+     * @throws \Exception
      */
     public function delete($data = null): string
     {
@@ -317,10 +305,9 @@ class Fetch
 
     /**
      * 查找记录 返回SQL.
-     *
      * @param array $data
-     *
      * @return string
+     * @throws \Exception
      */
     public function select(array $data = []): string
     {
@@ -339,12 +326,11 @@ class Fetch
 
     /**
      * 查找单条记录 返回SQL语句.
-     *
      * @param mixed $data
-     *
      * @return string
+     * @throws \Exception
      */
-    public function find($data = null): string
+    public function first($data = null): string
     {
         $this->query->parseOptions();
 
@@ -362,10 +348,9 @@ class Fetch
 
     /**
      * 查找多条记录 如果不存在则抛出异常.
-     *
      * @param mixed $data
-     *
      * @return string
+     * @throws \Exception
      */
     public function selectOrFail($data = null): string
     {
@@ -374,9 +359,7 @@ class Fetch
 
     /**
      * 查找单条记录 如果不存在则抛出异常.
-     *
      * @param mixed $data
-     *
      * @return string
      */
     public function findOrFail($data = null): string
@@ -386,9 +369,7 @@ class Fetch
 
     /**
      * 查找单条记录 不存在返回空数据（或者空模型）.
-     *
      * @param mixed $data 数据
-     *
      * @return string
      */
     public function findOrEmpty($data = null)
@@ -398,9 +379,7 @@ class Fetch
 
     /**
      * 获取实际的SQL语句.
-     *
      * @param string $sql
-     *
      * @return string
      */
     public function fetch(string $sql): string
@@ -412,10 +391,9 @@ class Fetch
 
     /**
      * COUNT查询.
-     *
      * @param string $field 字段名
-     *
      * @return string
+     * @throws \Exception
      */
     public function count(string $field = '*'): string
     {
@@ -434,9 +412,7 @@ class Fetch
 
     /**
      * SUM查询.
-     *
      * @param string $field 字段名
-     *
      * @return string
      */
     public function sum(string $field): string
@@ -446,9 +422,7 @@ class Fetch
 
     /**
      * MIN查询.
-     *
      * @param string $field 字段名
-     *
      * @return string
      */
     public function min(string $field): string
@@ -458,9 +432,7 @@ class Fetch
 
     /**
      * MAX查询.
-     *
      * @param string $field 字段名
-     *
      * @return string
      */
     public function max(string $field): string
@@ -470,9 +442,7 @@ class Fetch
 
     /**
      * AVG查询.
-     *
      * @param string $field 字段名
-     *
      * @return string
      */
     public function avg(string $field): string

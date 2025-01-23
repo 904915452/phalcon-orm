@@ -80,7 +80,7 @@ class Mysql extends \Phalcon\Db\Adapter\Pdo\Mysql implements ConnectionInterface
     {
         // 事件回调
         try {
-//            $this->db->trigger('before_find', $query);
+            // $this->db->trigger('before_find', $query);
         } catch (DbEventException $e) {
             return [];
         }
@@ -97,7 +97,7 @@ class Mysql extends \Phalcon\Db\Adapter\Pdo\Mysql implements ConnectionInterface
      * 查找记录.
      * @param BaseQuery $query 查询对象
      * @return array
-     * @throws \Exception
+     * @throws \Exception|Throwable
      */
     public function select(BaseQuery $query): array
     {

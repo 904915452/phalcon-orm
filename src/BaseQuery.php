@@ -1,6 +1,8 @@
 <?php
+
 namespace Dm\PhalconOrm;
 
+use Closure;
 use Dm\PhalconOrm\concern\ModelRelationQuery;
 use Dm\PhalconOrm\concern\ResultOperation;
 use Dm\PhalconOrm\concern\WhereQuery;
@@ -13,7 +15,8 @@ use Phalcon\Db\Adapter\Pdo\AbstractPdo;
  * 数据查询基础类.
  * @method getBind()
  */
-abstract class BaseQuery{
+abstract class BaseQuery
+{
 
     use ModelRelationQuery;
     use WhereQuery;
@@ -34,7 +37,7 @@ abstract class BaseQuery{
      * 主键
      * @var string|array|bool
      */
-    protected string|array|bool $pk;
+    protected string|array|bool $pk = 'id';
 
     /**
      * 当前查询参数.
@@ -69,7 +72,7 @@ abstract class BaseQuery{
      * @param string|array|bool $pk 主键
      * @return $this
      */
-    public function pk(string | array | bool $pk)
+    public function pk(string|array|bool $pk)
     {
         $this->pk = $pk;
         return $this;
@@ -86,7 +89,6 @@ abstract class BaseQuery{
 
     /**
      * 获取当前的数据表名称.
-     *
      * @return string
      */
     public function getName(): string
@@ -96,12 +98,10 @@ abstract class BaseQuery{
 
     /**
      * 指定当前操作的数据表.
-     *
      * @param string|array|Raw $table 表名
-     *
      * @return $this
      */
-    public function table(string | array | Raw $table)
+    public function table(string|array|Raw $table)
     {
         if (is_string($table) && !str_contains($table, ')')) {
             $table = $this->tableStr($table);
@@ -115,25 +115,23 @@ abstract class BaseQuery{
 
     /**
      * 指定数据表（字符串）.
-     *
      * @param string $table 表名
-     *
      * @return array|string
      */
-    protected function tableStr(string $table): array | string
+    protected function tableStr(string $table): array|string
     {
         if (!str_contains($table, ',')) {
             // 单表
             if (str_contains($table, ' ')) {
                 [$item, $alias] = explode(' ', $table);
-                $table          = [];
+                $table = [];
                 $this->alias([$item => $alias]);
                 $table[$item] = $alias;
             }
         } else {
             // 多表
             $tables = explode(',', $table);
-            $table  = [];
+            $table = [];
 
             foreach ($tables as $item) {
                 $item = trim($item);
@@ -151,12 +149,10 @@ abstract class BaseQuery{
 
     /**
      * 指定数据表别名.
-     *
      * @param array|string $alias 数据表别名
-     *
      * @return $this
      */
-    public function alias(array | string $alias)
+    public function alias(array|string $alias)
     {
         if (is_array($alias)) {
             $this->options['alias'] = $alias;
@@ -171,9 +167,7 @@ abstract class BaseQuery{
 
     /**
      * 指定多个数据表（数组格式）.
-     *
      * @param array $tables 表名列表
-     *
      * @return array
      */
     protected function tableArr(array $tables): array
@@ -233,7 +227,7 @@ abstract class BaseQuery{
     /**
      * 设置当前的查询参数.
      * @param string $option 参数名
-     * @param mixed  $value  参数值
+     * @param mixed $value 参数值
      * @return $this
      */
     public function setOption(string $option, $value)
@@ -252,7 +246,7 @@ abstract class BaseQuery{
     {
         if ('' === $option) {
             $this->options = [];
-            $this->bind    = [];
+            $this->bind = [];
         } elseif (isset($this->options[$option])) {
             unset($this->options[$option]);
         }
@@ -263,10 +257,10 @@ abstract class BaseQuery{
     /**
      * 查找单条记录.
      * @param mixed $data 主键数据
-     * @throws Exception
+     * @return mixed
      * @throws ModelNotFoundException
      * @throws DataNotFoundException
-     * @return mixed
+     * @throws Exception
      */
     public function first($data = null)
     {
@@ -328,10 +322,26 @@ abstract class BaseQuery{
     }
 
     /**
+     * 得到某个字段的值
+     * @param string $field   字段名
+     * @param mixed  $default 默认值
+     * @return mixed
+     */
+    public function value(string $field, $default = null)
+    {
+        $result = $this->connection->value($this, $field, $default);
+
+        $array[$field] = $result;
+//        $this->result($array);
+
+        return $array[$field];
+    }
+
+    /**
      * 把主键值转换为查询条件 支持复合主键.
      * @param mixed $data 主键数据
-     * @throws Exception
      * @return void
+     * @throws Exception
      */
     public function parsePkWhere($data): void
     {
@@ -412,9 +422,9 @@ abstract class BaseQuery{
             // 根据页数计算limit
             [$page, $listRows] = $options['page'];
 
-            $page     = $page > 0 ? $page : 1;
+            $page = $page > 0 ? $page : 1;
             $listRows = $listRows ?: (is_numeric($options['limit']) ? $options['limit'] : 20);
-            $offset   = $listRows * ($page - 1);
+            $offset = $listRows * ($page - 1);
 
             $options['limit'] = $offset . ',' . $listRows;
         }
@@ -461,7 +471,7 @@ abstract class BaseQuery{
      *
      * @return $this
      */
-    public function field(string | array | Raw | bool $field)
+    public function field(string|array|Raw|bool $field)
     {
         if (empty($field)) {
             return $this;
@@ -481,11 +491,12 @@ abstract class BaseQuery{
 
         if (true === $field) {
             // 获取全部字段
-            $field  = ['*'];
+            $fields = $this->getTableFields();
+            $field = $fields ?: ['*'];
         }
 
         if (isset($this->options['field'])) {
-            $field = array_merge((array) $this->options['field'], $field);
+            $field = array_merge((array)$this->options['field'], $field);
         }
 
         $this->options['field'] = array_unique($field, SORT_REGULAR);
@@ -496,10 +507,10 @@ abstract class BaseQuery{
     /**
      * 指定排序 order('id','desc') 或者 order(['id'=>'desc','create_time'=>'desc']).
      * @param string|array|Raw $field 排序字段
-     * @param string           $order 排序
+     * @param string $order 排序
      * @return $this
      */
-    public function order(string | array | Raw $field, string $order = '')
+    public function order(string|array|Raw $field, string $order = '')
     {
         if (empty($field)) {
             return $this;
@@ -551,5 +562,75 @@ abstract class BaseQuery{
     {
         $this->options['field_type'] = $type;
         return $this;
+    }
+
+    /**
+     * 指定查询数量.
+     * @param int $offset 起始位置
+     * @param int|null $length 查询数量
+     * @return $this
+     */
+    public function limit(int $offset, int $length = null)
+    {
+        $this->options['limit'] = $offset . ($length ? ',' . $length : '');
+        return $this;
+    }
+
+    /**
+     * 查询SQL组装 union.
+     * @param string|array|Closure $union UNION
+     * @param bool $all 是否适用UNION ALL
+     * @return $this
+     */
+    public function union(string|array|Closure $union, bool $all = false)
+    {
+        $this->options['union']['type'] = $all ? 'UNION ALL' : 'UNION';
+        if (is_array($union)) {
+            $this->options['union'] = array_merge($this->options['union'], $union);
+        } else {
+            $this->options['union'][] = $union;
+        }
+        return $this;
+    }
+
+    /**
+     * 查询SQL组装 union all.
+     * @param mixed $union UNION数据
+     * @return $this
+     */
+    public function unionAll(string|array|Closure $union)
+    {
+        return $this->union($union, true);
+    }
+
+    /**
+     * 指定查询lock.
+     * @param bool|string $lock 是否lock
+     * @return $this
+     */
+    public function lock(bool|string $lock = false)
+    {
+        $this->options['lock'] = $lock;
+        if ($lock) {
+            $this->options['master'] = true;
+        }
+        return $this;
+    }
+
+    /**
+     * 得到某个列的数组.
+     * @param string|array $field 字段名 多个字段用逗号分隔
+     * @param string       $key   索引
+     * @return array
+     */
+    public function column(string | array $field, string $key = ''): array
+    {
+        $result = $this->connection->column($this, $field, $key);
+
+//        if (count($result) != count($result, 1)) {
+//            $this->resultSet($result, false);
+//        }
+
+        return $result;
     }
 }

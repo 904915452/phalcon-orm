@@ -53,7 +53,8 @@ $mysql1 = $di->setShared('db', function () {
         'password' => 'root',
         'dbname' => 'test',
         'charset' => 'utf8mb4',
-        "options" => [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_STRINGIFY_FETCHES => false, PDO::ATTR_EMULATE_PREPARES => false]
+        "options" => [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_STRINGIFY_FETCHES => false, PDO::ATTR_EMULATE_PREPARES => false],
+        'fields_strict' => true, // 是否开启字段严格检查 某个字段不存在时，是否抛出异常
     ];
     return new $class($params);
 });
@@ -61,12 +62,14 @@ $mysql1 = $di->setShared('db', function () {
 
 // 实例
 $model = new TestModel;
-//
 
 $db = new \Dm\PhalconOrm\DbManager();
 $db->setConnector($di->getShared('db'));
 
-$data = $db->table("student_score")->fetchSql()->column("subject");
+$data = $db->table("student_score")->whereIn("id",[4,5])->fetchSql(true)->delete();
+//$data2 = TestModel::first(18);
+
+//$data = $db->fetchSql(true)->table("student_score")->where("id",">",10)->where("id","<","20")->update(["remarks" => "测试机1111"]);
 
 var_dump($data);
 exit;

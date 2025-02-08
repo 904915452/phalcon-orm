@@ -5,6 +5,7 @@ namespace Dm\PhalconOrm;
 use Closure;
 use Dm\PhalconOrm\concern\ModelRelationQuery;
 use Dm\PhalconOrm\concern\ResultOperation;
+use Dm\PhalconOrm\concern\Transaction;
 use Dm\PhalconOrm\concern\WhereQuery;
 use Dm\PhalconOrm\exception\DataNotFoundException;
 use Dm\PhalconOrm\exception\ModelNotFoundException;
@@ -17,10 +18,10 @@ use Phalcon\Db\Adapter\Pdo\AbstractPdo;
  */
 abstract class BaseQuery
 {
-
     use ModelRelationQuery;
     use WhereQuery;
     use ResultOperation;
+    use Transaction;
 
     /**
      * 数据库连接类
@@ -276,16 +277,16 @@ abstract class BaseQuery
         }
 
         // 数据处理
-//        if (empty($result)) {
-//            return $this->resultToEmpty();
-//        }
-//
-//        if (!empty($this->model)) {
-//            // 返回模型对象
-//            $this->resultToModel($result);
-//        } else {
-//            $this->result($result);
-//        }
+        if (empty($result)) {
+            return $this->resultToEmpty();
+        }
+
+        if (!empty($this->model)) {
+            // 返回模型对象
+            $this->resultToModel($result);
+        } else {
+            $this->result($result);
+        }
 
         return $result;
     }
@@ -323,8 +324,8 @@ abstract class BaseQuery
 
     /**
      * 得到某个字段的值
-     * @param string $field   字段名
-     * @param mixed  $default 默认值
+     * @param string $field 字段名
+     * @param mixed $default 默认值
      * @return mixed
      */
     public function value(string $field, $default = null)
@@ -404,6 +405,10 @@ abstract class BaseQuery
             if (!isset($options[$name])) {
                 $options[$name] = [];
             }
+        }
+
+        if (!isset($options['strict'])) {
+            $options['strict'] = $this->connection->getConfig('fields_strict');
         }
 
         foreach (['master', 'lock', 'fetch_sql', 'array', 'distinct', 'procedure', 'with_cache'] as $name) {
@@ -620,10 +625,10 @@ abstract class BaseQuery
     /**
      * 得到某个列的数组.
      * @param string|array $field 字段名 多个字段用逗号分隔
-     * @param string       $key   索引
+     * @param string $key 索引
      * @return array
      */
-    public function column(string | array $field, string $key = ''): array
+    public function column(string|array $field, string $key = ''): array
     {
         $result = $this->connection->column($this, $field, $key);
 
@@ -632,5 +637,200 @@ abstract class BaseQuery
 //        }
 
         return $result;
+    }
+
+    /**
+     * 插入记录.
+     * @param array $data 数据
+     * @param bool $getLastInsID 返回自增主键
+     * @return int|string
+     */
+    public function insert(array $data = [], bool $getLastInsID = false)
+    {
+        if (!empty($data)) {
+            $this->options['data'] = $data;
+        }
+        return $this->connection->newInsert($this, $getLastInsID);
+    }
+
+    /**
+     * 更新记录.
+     * @param array $data 数据
+     * @return int
+     * @throws Exception
+     */
+    public function update(array $data = []): int
+    {
+        if (!empty($data)) {
+            $this->options['data'] = array_merge($this->options['data'] ?? [], $data);
+        }
+
+        if (empty($this->options['where'])) {
+            $this->parseUpdateData($this->options['data']);
+        }
+
+        if (empty($this->options['where']) && $this->model) {
+            $this->where($this->model->getWhere());
+        }
+
+        if (empty($this->options['where'])) {
+            // 如果没有任何更新条件则不执行
+            throw new Exception('miss update condition');
+        }
+
+        return $this->connection->newUpdate($this);
+    }
+
+    /**
+     * 分析数据是否存在更新条件.
+     * @param array $data 数据
+     * @return bool
+     * @throws Exception
+     */
+    public function parseUpdateData(array &$data): bool
+    {
+        $pk = $this->getPk();
+        $isUpdate = false;
+        // 如果存在主键数据 则自动作为更新条件
+        if (is_string($pk) && isset($data[$pk])) {
+            $this->where($pk, '=', $data[$pk]);
+            $this->options['key'] = $data[$pk];
+            unset($data[$pk]);
+            $isUpdate = true;
+        } elseif (is_array($pk)) {
+            foreach ($pk as $field) {
+                if (isset($data[$field])) {
+                    $this->where($field, '=', $data[$field]);
+                    $isUpdate = true;
+                } else {
+                    // 如果缺少复合主键数据则不执行
+                    throw new Exception('miss complex primary data');
+                }
+                unset($data[$field]);
+            }
+        }
+
+        return $isUpdate;
+    }
+
+    /**
+     * 保存记录 自动判断insert或者update.
+     * @param array $data 数据
+     * @param bool $forceInsert 是否强制insert
+     * @return int
+     * @throws Exception
+     */
+    public function save(array $data = [], bool $forceInsert = false)
+    {
+        if ($forceInsert) {
+            return $this->insert($data);
+        }
+
+        $this->options['data'] = array_merge($this->options['data'] ?? [], $data);
+
+        if (!empty($this->options['where'])) {
+            $isUpdate = true;
+        } else {
+            $isUpdate = $this->parseUpdateData($this->options['data']);
+        }
+
+        return $isUpdate ? $this->update() : $this->insert();
+    }
+
+    /**
+     * 设置是否严格检查字段名.
+     * @param bool $strict 是否严格检查字段
+     * @return $this
+     */
+    public function strict(bool $strict = true)
+    {
+        $this->options['strict'] = $strict;
+        return $this;
+    }
+
+    /**
+     * 设置自增序列名.
+     * @param string|null $sequence 自增序列名
+     * @return $this
+     */
+    public function sequence(string $sequence = null)
+    {
+        $this->options['sequence'] = $sequence;
+        return $this;
+    }
+
+    /**
+     * 插入记录并获取自增ID.
+     * @param array $data 数据
+     * @return int|string
+     */
+    public function insertGetId(array $data)
+    {
+        return $this->insert($data, true);
+    }
+
+    /**
+     * 批量插入记录.
+     * @param array $dataSet 数据集
+     * @param int $limit 每次写入数据限制
+     * @return int
+     */
+    public function insertAll(array $dataSet = [], int $limit = 0): int
+    {
+        if (empty($dataSet)) {
+            $dataSet = $this->options['data'] ?? [];
+        }
+
+        if ($limit) {
+            $this->limit($limit);
+        }
+        return $this->connection->insertAll($this, $dataSet);
+    }
+
+    /**
+     * 删除记录.
+     * @param mixed $data 表达式 true 表示强制删除
+     * @return int
+     * @throws Exception
+     */
+    public function delete($data = null): int
+    {
+        if (!is_null($data) && true !== $data) {
+            // AR模式分析主键条件
+            $this->parsePkWhere($data);
+        }
+
+        if (empty($this->options['where']) && $this->model) {
+            $this->where($this->model->getWhere());
+        }
+
+        if (true !== $data && empty($this->options['where'])) {
+            // 如果条件为空 不进行删除操作 除非设置 1=1
+            throw new Exception('delete without condition');
+        }
+
+        if (!empty($this->options['soft_delete'])) {
+            // 软删除
+            list($field, $condition) = $this->options['soft_delete'];
+            if ($condition) {
+                unset($this->options['soft_delete']);
+                $this->options['data'] = [$field => $condition];
+
+                return $this->connection->update($this);
+            }
+        }
+
+        $this->options['data'] = $data;
+
+        return $this->connection->del($this);
+    }
+
+    /**
+     * 获取模型的更新条件.
+     * @param array $options 查询参数
+     */
+    protected function getModelUpdateCondition(array $options)
+    {
+        return $options['where']['AND'] ?? null;
     }
 }

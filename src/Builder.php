@@ -74,7 +74,7 @@ class Builder extends BaseBuilder
                 }
             } elseif (is_scalar($val)) {
                 // 过滤非标量数据
-                if (!$query->isAutoBind() && Connection::PARAM_STR == $bind[$key]) {
+                if (!$query->isAutoBind() && self::PARAM_STR == $bind[$key]) {
                     $val = '\'' . $val . '\'';
                 }
                 $result[$item] = !$query->isAutoBind() ? $val : $this->parseDataBind($query, $key, $val, $bind);
@@ -393,7 +393,7 @@ class Builder extends BaseBuilder
                     $array[] = ':' . $name;
                 }
                 $value = implode(',', $array);
-            } elseif (Connection::PARAM_STR == $bindType) {
+            } elseif (self::PARAM_STR == $bindType) {
                 $value = '\'' . implode('\',\'', $value) . '\'';
             } else {
                 $value = implode(',', $value);

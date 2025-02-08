@@ -12,6 +12,11 @@ use Phalcon\Db\Adapter\Pdo\AbstractPdo;
  */
 abstract class BaseBuilder
 {
+    const PARAM_INT   = 1;
+    const PARAM_STR   = 2;
+    const PARAM_BOOL  = 5;
+    const PARAM_FLOAT = 21;
+
     /**
      * Connection对象
      * @var

@@ -15,7 +15,8 @@
   ],
   "require": {
     "phalcon/ide-stubs": "^5.8",
-    "ext-pdo": "*"
+    "ext-pdo": "*",
+    "ext-mbstring": "*"
   },
   "config": {
     "allow-plugins": {

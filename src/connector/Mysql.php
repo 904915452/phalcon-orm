@@ -38,8 +38,6 @@ class Mysql extends \Phalcon\Db\Adapter\Pdo\Mysql implements ConnectionInterface
      */
     protected array $bind;
 
-
-
     /**
      * Constructor for Phalcon\Db\Adapter\Pdo
      * @param $config
@@ -60,7 +58,7 @@ class Mysql extends \Phalcon\Db\Adapter\Pdo\Mysql implements ConnectionInterface
      * 获取配置信息
      * @return mixed|null
      */
-    protected function getConfig(string $config = '')
+    public function getConfig(string $config = '')
     {
         if ('' === $config) {
             return $this->descriptor;

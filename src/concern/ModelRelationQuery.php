@@ -52,16 +52,6 @@ trait ModelRelationQuery
             $this->jsonModelResult($result);
         }
 
-        // 实时读取延迟数据
-        if (!empty($this->options['lazy_fields'])) {
-            $id = $this->getKey($result);
-            foreach ($this->options['lazy_fields'] as $field) {
-                if (isset($result[$field])) {
-                    $result[$field] += $this->getLazyFieldValue($field, $id);
-                }
-            }
-        }
-
         $result = $this->model->newInstance(
             $result,
             !empty($this->options['is_resultSet']) ? null : $this->getModelUpdateCondition($this->options),
@@ -73,31 +63,31 @@ trait ModelRelationQuery
             call_user_func_array($filter, [$result, $this->options]);
         }
 
-        // 关联查询
-        if (!empty($this->options['relation'])) {
-            $result->relationQuery($this->options['relation'], $this->options['with_relation_attr']);
-        }
-
-        // 关联预载入查询
-        if (empty($this->options['is_resultSet'])) {
-            foreach (['with', 'with_join'] as $with) {
-                if (!empty($this->options[$with])) {
-                    $result->eagerlyResult(
-                        $this->options[$with],
-                        $this->options['with_relation_attr'],
-                        'with_join' == $with,
-                        $this->options['with_cache'] ?? false
-                    );
-                }
-            }
-        }
-
-        // 关联统计查询
-        if (!empty($this->options['with_aggregate'])) {
-            foreach ($this->options['with_aggregate'] as $val) {
-                $result->relationCount($this, $val[0], $val[1], $val[2], false);
-            }
-        }
+//        // 关联查询
+//        if (!empty($this->options['relation'])) {
+//            $result->relationQuery($this->options['relation'], $this->options['with_relation_attr']);
+//        }
+//
+//        // 关联预载入查询
+//        if (empty($this->options['is_resultSet'])) {
+//            foreach (['with', 'with_join'] as $with) {
+//                if (!empty($this->options[$with])) {
+//                    $result->eagerlyResult(
+//                        $this->options[$with],
+//                        $this->options['with_relation_attr'],
+//                        'with_join' == $with,
+//                        $this->options['with_cache'] ?? false
+//                    );
+//                }
+//            }
+//        }
+//
+//        // 关联统计查询
+//        if (!empty($this->options['with_aggregate'])) {
+//            foreach ($this->options['with_aggregate'] as $val) {
+//                $result->relationCount($this, $val[0], $val[1], $val[2], false);
+//            }
+//        }
 
         // 动态获取器
         if (!empty($this->options['with_attr'])) {

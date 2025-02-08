@@ -17,6 +17,13 @@ class Query extends BaseQuery
     use JoinAndViewQuery;
 
     /**
+     *  当前数据表自增主键.
+     * @var string
+     * /
+     */
+    protected $autoinc;
+
+    /**
      * 创建子查询SQL.
      * @param bool $sub 是否添加括号
      * @throws Exception
@@ -107,4 +114,41 @@ class Query extends BaseQuery
         $this->options['partition'] = $partition;
         return $this;
     }
+
+    /**
+     * 获取当前数据表的自增主键.
+     *
+     * @return string|null
+     */
+    public function getAutoInc()
+    {
+        $tableName = $this->getTable();
+        if (empty($this->autoinc) && $tableName) {
+            $this->autoinc = $this->connection->getAutoInc($tableName);
+        }
+        return $this->autoinc;
+    }
+
+    /**
+     * 设置DUPLICATE.
+     * @param array|string|Raw $duplicate DUPLICATE信息
+     * @return $this
+     */
+    public function duplicate($duplicate)
+    {
+        $this->options['duplicate'] = $duplicate;
+        return $this;
+    }
+
+    /**
+     * 设置是否REPLACE.
+     * @param bool $replace 是否使用REPLACE写入数据
+     * @return $this
+     */
+    public function replace(bool $replace = true)
+    {
+        $this->options['replace'] = $replace;
+        return $this;
+    }
+
 }

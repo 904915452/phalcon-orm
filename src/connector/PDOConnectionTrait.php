@@ -455,7 +455,7 @@ trait PDOConnectionTrait
      * @throws DbException
      * @throws Throwable
      */
-    public function column(BaseQuery $query, string | array $column, string $key = ''): array
+    public function column(BaseQuery $query, string|array $column, string $key = ''): array
     {
         $options = $query->parseOptions();
 
@@ -481,7 +481,7 @@ trait PDOConnectionTrait
             $field[] = $key;
         }
 
-        $query->setOption('field', (array) $field);
+        $query->setOption('field', (array)$field);
 
         // 生成查询SQL
         $sql = $this->builder->select($query);
@@ -493,7 +493,7 @@ trait PDOConnectionTrait
         }
 
         // 执行查询操作
-        $pdo       = $this->getPDOStatement($sql, $query->getBind(), $options['master']);
+        $pdo = $this->getPDOStatement($sql, $query->getBind(), $options['master']);
         $resultSet = $pdo->fetchAll(PDO::FETCH_ASSOC);
 
         if (is_string($key) && str_contains($key, '.')) {
@@ -521,6 +521,273 @@ trait PDOConnectionTrait
             $result = array_column($resultSet, null, $key);
         } else {
             $result = $resultSet;
+        }
+
+        return $result;
+    }
+
+    /**
+     * 插入记录.
+     * @param BaseQuery $query 查询对象
+     * @param bool $getLastInsID 返回自增主键
+     * @return mixed
+     * @throws DbException
+     * @throws Throwable
+     */
+    public function newInsert(BaseQuery $query, bool $getLastInsID = false)
+    {
+        // 分析查询表达式
+        $options = $query->parseOptions();
+
+        // 生成SQL语句
+        $sql = $this->builder->insert($query);
+
+        // 执行操作
+        $result = '' == $sql ? 0 : $this->pdoExecute($query, $sql);
+
+        if ($result) {
+            $sequence = $options['sequence'] ?? null;
+            $lastInsId = $this->getLastInsID($query, $sequence);
+
+            $data = $options['data'];
+
+            if ($lastInsId) {
+                $pk = $query->getAutoInc();
+                if ($pk && is_string($pk)) {
+                    $data[$pk] = $lastInsId;
+                }
+            }
+
+            $query->setOption('data', $data);
+
+//            $this->db->trigger('after_insert', $query);
+
+            if ($getLastInsID && $lastInsId) {
+                return $lastInsId;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * 更新记录.
+     * @param BaseQuery $query 查询对象
+     * @return int
+     * @throws DbException
+     * @throws Throwable
+     */
+    public function newUpdate(BaseQuery $query): int
+    {
+        $query->parseOptions();
+
+        // 生成UPDATE SQL语句
+        $sql = $this->builder->update($query);
+
+        // 执行操作
+        $result = '' == $sql ? 0 : $this->pdoExecute($query, $sql);
+
+        if ($result) {
+//            $this->db->trigger('after_update', $query);
+        }
+        return $result;
+    }
+
+    /**
+     * 获取最近插入的ID.
+     * @param BaseQuery $query 查询对象
+     * @param string|null $sequence 自增序列名
+     * @return mixed
+     */
+    public function getLastInsID(BaseQuery $query, string $sequence = null)
+    {
+        try {
+            $insertId = $this->pdo->lastInsertId($sequence);
+        } catch (\Exception $e) {
+            $insertId = '';
+        }
+
+        return $this->autoInsIDType($query, $insertId);
+    }
+
+    /**
+     * 获取最近插入的ID.
+     * @param BaseQuery $query    查询对象
+     * @param string    $insertId 自增ID
+     * @return mixed
+     */
+    protected function autoInsIDType(BaseQuery $query, string $insertId)
+    {
+        $pk = $query->getAutoInc();
+
+        if ($pk && is_string($pk)) {
+            $type = $this->getFieldsBind($query->getTable())[$pk];
+
+            if (self::PARAM_INT == $type) {
+                $insertId = (int) $insertId;
+            } elseif (self::PARAM_FLOAT == $type) {
+                $insertId = (float) $insertId;
+            }
+        }
+
+        return $insertId;
+    }
+
+    /**
+     * 获取数据表绑定信息.
+     * @param mixed $tableName 数据表名
+     * @return array
+     */
+    public function getFieldsBind($tableName): array
+    {
+        return $this->getTableInfo($tableName, 'bind');
+    }
+
+    /**
+     * 执行语句.
+     * @param BaseQuery $query 查询对象
+     * @param string $sql sql指令
+     * @param bool $origin 是否原生查询
+     * @return int
+     * @throws DbException
+     * @throws Throwable
+     */
+    protected function pdoExecute(BaseQuery $query, string $sql, bool $origin = false): int
+    {
+        if ($origin) {
+            $query->parseOptions();
+        }
+
+//        $this->queryPDOStatement($query->master(true), $sql);
+        $this->queryPDOStatement($query, $sql);
+
+        $this->numRows = $this->PDOStatement->rowCount();
+
+        return $this->numRows;
+    }
+
+    /**
+     * @param BaseQuery $query
+     * @param string $sql
+     * @return PDOStatement
+     * @throws DbException|Throwable
+     */
+    protected function queryPDOStatement(BaseQuery $query, string $sql): PDOStatement
+    {
+        $bind = $query->getBind();
+        return $this->getPDOStatement($sql, $bind);
+    }
+
+    /**
+     * 获取数据表的自增主键.
+     * @param mixed $tableName 数据表名
+     * @return string
+     */
+    public function getAutoInc($tableName): string
+    {
+        return $this->getTableInfo($tableName, 'autoinc');
+    }
+
+    /**
+     * 执行数据库事务
+     * @param callable $callback 数据操作方法回调
+     * @throws PDOException
+     * @throws \Exception
+     * @throws \Throwable
+     *
+     * @return mixed
+     */
+    public function transaction(callable $callback)
+    {
+        $this->begin();
+
+        try {
+            $result = $callback($this);
+
+            $this->commit();
+
+            return $result;
+        } catch (\Exception  | \Throwable $e) {
+            $this->rollback();
+
+            throw $e;
+        }
+    }
+
+    /**
+     * 批量插入记录.
+     * @param BaseQuery $query   查询对象
+     * @param array     $dataSet 数据集
+     * @throws \Exception
+     * @throws \Throwable
+     * @return int
+     */
+    public function insertAll(BaseQuery $query, array $dataSet = []): int
+    {
+        if (!is_array(reset($dataSet))) {
+            return 0;
+        }
+
+        $options = $query->parseOptions();
+
+        if (!empty($options['limit']) && is_numeric($options['limit'])) {
+            $limit = (int) $options['limit'];
+        } else {
+            $limit = 0;
+        }
+
+        if (0 === $limit && count($dataSet) >= 5000) {
+            $limit = 1000;
+        }
+
+        if ($limit) {
+            // 分批写入 自动启动事务支持
+            $this->begin();
+
+            try {
+                $array = array_chunk($dataSet, $limit, true);
+                $count = 0;
+
+                foreach ($array as $item) {
+                    $sql = $this->builder->insertAll($query, $item);
+                    $count += $this->pdoExecute($query, $sql);
+                }
+
+                // 提交事务
+                $this->commit();
+            } catch (\Exception  | \Throwable $e) {
+                $this->rollback();
+
+                throw $e;
+            }
+
+            return $count;
+        }
+
+        $sql = $this->builder->insertAll($query, $dataSet);
+
+        return $this->pdoExecute($query, $sql);
+    }
+
+    /**
+     * 删除记录.
+     * @param BaseQuery $query 查询对象
+     * @throws PDOException
+     * @return int
+     */
+    public function del(BaseQuery $query): int
+    {
+        // 分析查询表达式
+        $query->parseOptions();
+
+        // 生成删除SQL语句
+        $sql = $this->builder->delete($query);
+
+        // 执行操作
+        $result = $this->pdoExecute($query, $sql);
+
+        if ($result) {
+//            $this->db->trigger('after_delete', $query);
         }
 
         return $result;

@@ -4,7 +4,44 @@
 
 
 
+
 # 数据库
+
+## 连接数据库
+
+```
+$di = new FactoryDefault();  
+$mysql1 = $di->setShared('db', function () {  
+    $class = 'Dm\PhalconOrm\connector\Mysql';  
+    $params = [  
+        'host' => 'host.docker.internal',  
+        'username' => 'root',  
+        'password' => 'root',  
+        'dbname' => 'test',  
+        'charset' => 'utf8mb4',  
+        "options" => [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_STRINGIFY_FETCHES => false, PDO::ATTR_EMULATE_PREPARES => false],  
+        
+        // 新增配置项
+        'fields_strict' => true, // 是否开启字段严格检查 某个字段不存在时，是否抛出异常  
+    ];  
+    return new $class($params);  
+});
+```
+
+
+
+### db连接：
+```
+例：
+$db = new \Dm\PhalconOrm\DbManager();  
+$db->setConnector($di->getShared('db'));
+$data = $db->table("student_score")->save(["name" => "王五20222", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 20]);
+```
+
+### 模型：
+
+> 参考 模型 章节
+
 
 ## 查询构造器
 
@@ -38,11 +75,160 @@ SELECT score FROM student_score WHERE  name = '张三'  AND subject = '数学' L
 
 > 列查询 column()
 
+- 查询单个字段
 ```
 $db->table("student_score")->column("subject");
 
 SELECT subject FROM student_score
 ```
+
+- 查询两个字段
+```
+$data = $model->column("name","class");
+
+会自动将第二个字段作为关联数组的key，以一维数组返回。
+
+array(2) {
+  [182111]=>  string(6) "张三"
+  [182112]=>  string(6) "王五"
+}
+```
+
+### 添加数据
+- insert() 添加数据
+
+```
+$db->table("student_score")->insert(["name" => "张三", "subject" => "计算机", "score" => 62, "class" => 182111]);
+
+INSERT INTO student_score SET name = '张三' , subject = '计算机' , score = 62 , class = '182111'
+```
+
+- duplicate()  主要用于某数据 存在则更新 不存在则创建 的逻辑
+
+```
+$db->table("student_score")
+->duplicate(['name' => "张三", "subject" => "计算机", "score" => 62])
+->insert(["name" => "张三", "subject" => "计算机", "score" => 62, "class" => 182111, "id" => 9]);
+
+
+INSERT INTO student_score SET name = '张三' , subject = '计算机' , score = 62 , class = '182111' , id = 9  ON DUPLICATE KEY UPDATE name = '张三' , subject = '计算机' , score = '62'
+
+要插入的表中需要有一个唯一键，例如 主键，当唯一键冲突时，会执行 ON DUPLICATE KEY UPDATE 后面的语句
+```
+
+例：
+原数据：
+
+| id  | name | subject | score | class   |
+| --- | ---- | ------- | ----- | ------- |
+| 9   | 张三   | 计算机     | 60    | 1821111 |
+
+```
+$db->table("student_score")
+->duplicate(['name' => "张三2", "subject" => "计算机", "score" => 62])
+->insert(["name" => "张三", "subject" => "计算机", "score" => 62, "class" => 182111, "id" => 9]);
+```
+
+> 当唯一键冲突时，会对冲突的那条数据，根据duplicate()里面的数据，执行更新。
+
+执行后的结果：
+
+| id  | name | subject | score | class   |
+| --- | ---- | ------- | ----- | ------- |
+| 9   | 张三   | 计算机     | 62    | 1821111 |
+
+
+- save()
+
+```
+$model->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
+
+INSERT INTO student_score SET name = '王五' , subject = '计算机' , score = 71 , class = '182112'
+```
+
+> 同理：db也是可以的
+
+```
+$db->table("student_score")->save(["name" => "王五222", "subject" => "计算机", "score" => 733, "class" => 182112]);
+```
+
+- replace()
+
+| 变更前 | 19  | 王五  | 计算机 | 72  | 182112 |
+| --- | --- | --- | --- | --- | ------ |
+| 变更后 | 19  | 王五  | 计算机 | 71  | 182112 |
+
+```
+$data = $model->replace()->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"id" => 19]);
+```
+
+- insertGetId()
+
+```
+$id = $model->insertGetId(["name" => "王五", "subject" => "计算机", "score" => 72, "class" => 182112]);
+
+返回自增ID
+```
+
+- insertAll() 批量插入
+
+```
+$model->insertAll([
+["name" => "王五", "subject" => "计算机", "score" => 72, "class" => 182112],["name" => "王五", "subject" => "计算机", "score" => 72, "class" => 182112],["name" => "王五", "subject" => "计算机", "score" => 72, "class" => 182112]
+]);
+
+返回插入条数
+```
+
+```
+$data = $db->table("student_score")->replace()->insertAll([  
+    ["name" => "王五20", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 20],  
+    ["name" => "王五21", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 21],  
+    ["name" => "王五22", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 22]  
+]);
+也可以用DB这样调用，替换数据
+```
+
+> 确保要批量添加的数据字段是一致的
+
+
+### 更新数据
+
+- save()
+```
+$data = $db->table("student_score")->save(["name" => "王五20222", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 20]);
+
+
+$model = TestModel::first(17);  
+$model->name = "张三1zxczxc";  
+$model->save();
+```
+
+---
+
+- update()
+
+```
+$data = $db->table("student_score")->where("id",">",10)->where("id","<","20")->update(["remarks" => "测试机1111"]);
+
+UPDATE student_score  SET remarks = '测试机1111'  WHERE  id > 10  AND id < 20
+```
+
+
+### 删除数据
+
+delete()
+
+> 返回影响的行数（删除了几条数据）
+
+```
+$affectRows = $db->table("student_score")->whereIn("id",[4,5])->delete();
+
+DELETE FROM student_score WHERE  id IN (4,5)
+```
+
+---
+
 
 ### 链式操作
 
@@ -440,7 +626,31 @@ $db->table("student_score")->where("class","182111")->fetchSql()->first()
 
 ---
 
+toArr()
 
+> 转化为数组
+
+```
+$model = TestModel::first(17);
+var_dump($model->toArr())
+
+array(6) {
+  ["id"]=>
+  int(17)
+  ["name"]=>
+  string(13) "张三1zxczxc"
+  ["subject"]=>
+  string(9) "计算机"
+  ["score"]=>
+  int(62)
+  ["class"]=>
+  string(6) "182111"
+  ["remarks"]=>
+  string(13) "测试机1111"
+}
+```
+
+---
 
 
 
@@ -475,3 +685,4 @@ $mysql1 = $di->setShared('db', function () {
 
 使用新的Mysql连接类进行连接数据库
 ```
+ 

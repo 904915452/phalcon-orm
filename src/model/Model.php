@@ -10,6 +10,14 @@ use Dm\PhalconOrm\model\concern\TimeStamp;
 use Dm\PhalconOrm\Query;
 use Phalcon\Mvc\Model as MvcModel;
 
+/**
+ * @method static select()
+ * @method static first()
+ * @method static where()
+ * @method static whereOr()
+ * @method static order()
+ * @method static limit()
+ */
 abstract class Model extends MvcModel
 {
     use Attribute;

@@ -23,7 +23,7 @@ trait RelationShip
     {
         $relation = Str::camel($attr);
 
-        if ((method_exists($this, $relation) && !method_exists('think\Model', $relation)) || isset(static::$macro[static::class][$relation])) {
+        if ((method_exists($this, $relation) && !method_exists('Dm\PhalconOrm\model\Model', $relation)) || isset(static::$macro[static::class][$relation])) {
             return $relation;
         }
 

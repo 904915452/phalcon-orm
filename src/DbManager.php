@@ -5,6 +5,12 @@ namespace Dm\PhalconOrm;
 use Dm\PhalconOrm\model\Model;
 use Phalcon\Db\Adapter\AdapterInterface;
 
+/**
+ * @method startTrans()
+ * @method commit()
+ * @method rollback()
+ * @method transaction(\Closure $param)
+ */
 class DbManager
 {
     protected $connector;

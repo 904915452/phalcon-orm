@@ -612,8 +612,8 @@ trait PDOConnectionTrait
 
     /**
      * 获取最近插入的ID.
-     * @param BaseQuery $query    查询对象
-     * @param string    $insertId 自增ID
+     * @param BaseQuery $query 查询对象
+     * @param string $insertId 自增ID
      * @return mixed
      */
     protected function autoInsIDType(BaseQuery $query, string $insertId)
@@ -624,9 +624,9 @@ trait PDOConnectionTrait
             $type = $this->getFieldsBind($query->getTable())[$pk];
 
             if (self::PARAM_INT == $type) {
-                $insertId = (int) $insertId;
+                $insertId = (int)$insertId;
             } elseif (self::PARAM_FLOAT == $type) {
-                $insertId = (float) $insertId;
+                $insertId = (float)$insertId;
             }
         }
 
@@ -691,11 +691,11 @@ trait PDOConnectionTrait
     /**
      * 执行数据库事务
      * @param callable $callback 数据操作方法回调
-     * @throws PDOException
+     * @return mixed
      * @throws \Exception
      * @throws \Throwable
      *
-     * @return mixed
+     * @throws PDOException
      */
     public function transaction(callable $callback)
     {
@@ -707,11 +707,22 @@ trait PDOConnectionTrait
             $this->commit();
 
             return $result;
-        } catch (\Exception  | \Throwable $e) {
+        } catch (\Exception|\Throwable $e) {
             $this->rollback();
 
             throw $e;
         }
+    }
+
+    /**
+     * 启动事务
+     * @return void
+     * @throws \Exception
+     * @throws \PDOException
+     */
+    public function startTrans(): void
+    {
+        $this->begin();
     }
 
     /**
@@ -791,5 +802,28 @@ trait PDOConnectionTrait
         }
 
         return $result;
+    }
+
+    /**
+     * 得到某个字段的值
+     * @param BaseQuery $query 查询对象
+     * @param string $aggregate 聚合方法
+     * @param string|Raw $field 字段名
+     * @param bool $force 强制转为数字类型
+     * @return mixed
+     * @throws DbException
+     * @throws Throwable
+     */
+    public function aggregate(BaseQuery $query, string $aggregate, string | Raw $field, bool $force = false)
+    {
+        if (is_string($field) && 0 === stripos($field, 'DISTINCT ')) {
+            [$distinct, $field] = explode(' ', $field);
+        }
+
+        $field = $aggregate . '(' . (!empty($distinct) ? 'DISTINCT ' : '') . $this->builder->parseKey($query, $field, true) . ') AS duomai_' . strtolower($aggregate);
+
+        $result = $this->value($query, $field, 0, false);
+
+        return $force ? (float) $result : $result;
     }
 }

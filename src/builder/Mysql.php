@@ -306,4 +306,22 @@ class Mysql extends Builder
             $this->deleteSql
         );
     }
+
+    /**
+     * FIND_IN_SET 查询.
+     * @param Query  $query 查询对象
+     * @param string $key
+     * @param string $exp
+     * @param mixed  $value
+     * @param string $field
+     * @return string
+     */
+    protected function parseFindInSet(Query $query, string $key, string $exp, $value, string $field): string
+    {
+        if ($value instanceof Raw) {
+            $value = $this->parseRaw($query, $value);
+        }
+
+        return 'FIND_IN_SET(' . $value . ', ' . $key . ')';
+    }
 }

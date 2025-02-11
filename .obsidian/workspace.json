@@ -73,8 +73,7 @@
               "title": "书签"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -165,17 +164,17 @@
   },
   "active": "5f09b52c62a793c7",
   "lastOpenFiles": [
+    "test/test.php~",
+    "src/paginator/driver/Bootstrap.php",
+    "src/paginator/driver",
+    "src/paginator",
+    "src/Paginator.php~",
+    "src/Paginator.php",
+    "src/concern/AggregateQuery.php",
     "src/model/concern/RelationShip.php",
     "src/concern/Transaction.php",
     "src/model/Relation.php",
     "src/model/concern/Conversion.php",
-    "src/model/Pivot.php",
-    "src/helper/Arr.php",
-    "src/helper/contract/Jsonable.php",
-    "src/helper/contract/Arrayable.php",
-    "src/helper/contract",
-    "src/helper/Collection.php",
-    "src/model/relation/BelongsTo.php",
     "Pasted image 20250123143832.png"
   ]
 }

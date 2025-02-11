@@ -1,6 +1,7 @@
 <?php
 namespace Dm\PhalconOrm;
 
+use Closure;
 use Exception;
 
 /**

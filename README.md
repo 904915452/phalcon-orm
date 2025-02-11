@@ -227,6 +227,68 @@ $affectRows = $db->table("student_score")->whereIn("id",[4,5])->delete();
 DELETE FROM student_score WHERE  id IN (4,5)
 ```
 
+Model同理
+
+```
+TestModel::whereIn("id",[6,7])->delete()
+
+DELETE FROM student_score WHERE  id IN (6,7)
+```
+
+---
+
+
+
+### 聚合查询
+
+- count()
+
+```
+$db->table("student_score")->count()
+
+SELECT COUNT(*) AS duomai_count FROM student_score
+```
+
+```
+$db->table("student_score")->fetchSql()->count("id")
+
+SELECT COUNT(id) AS duomai_count FROM student_score
+```
+---
+
+- max()
+
+```
+$db->table("student_score")->max("id");
+
+SELECT MAX(id) AS duomai_max FROM student_score
+```
+---
+
+- min()
+
+```
+$db->table("student_score")->min("id");
+
+SELECT MIN(id) AS duomai_min FROM student_score
+```
+---
+- avg()
+
+```
+$db->table("student_score")->avg("id");
+
+SELECT AVG(id) AS duomai_avg FROM student_score
+```
+---
+
+- sum()
+
+```
+$db->table("student_score")->sum("id");
+
+SELECT SUM(id) AS duomai_sum FROM student_score
+```
 ---
 
 
@@ -664,7 +726,262 @@ array(6) {
 
 
 
+
+### 分页查询
+
+1. 简易用法
+- paginate(参数1，参数2)
+- 参数1: 每页条数 默认15
+- 所有数据总数 传该参数 不会自动计算总条数
+
+```
+$db->table("student_score")->paginate(3);
+
+获取总条数
+$data->total()
+```
+
+2. 数组用法
+
+```
+$data = $db->table("student_score")->paginate([  
+    'list_rows'=> 10, // 每页条数  
+    'page' => 2 // 第几页  
+]);
+```
+
+### 高级查询
+
+- whereOr()
+
+```
+$db->table("student_score")->whereOr("name","张三")->whereOr("name","李四")->select();
+
+SELECT * FROM student_score WHERE  name = '张三'  OR name = '李四
+```
+
+---
+
+- whereNull()
+
+```
+$db->table("student_score")->whereNull("remarks")->select();
+
+SELECT * FROM student_score WHERE  remarks IS NULL
+```
+
+---
+
+- whereNotNull()
+
+```
+$db->table("student_score")->whereNotNull("remarks")->select();
+
+SELECT * FROM student_score WHERE  remarks IS NOT NULL
+```
+
+---
+
+- whereExists()
+- whereNotExists()
+
+```
+$db->table("student_score")->alias("sc")->whereExists(function($q){  
+    $q->table("student")->where("name",1);  
+})->select()
+
+SELECT * FROM student_score sc WHERE  EXISTS ( SELECT * FROM student WHERE  name = '1' )
+```
+
+---
+
+- whereIn()
+
+```
+$db->table("student_score")->whereIn('id', [1, 2, 3, 4, 5, 6, 7, 8, 9])->select();
+
+SELECT * FROM student_score WHERE  id IN (1,2,3,4,5,6,7,8,9)
+```
+
+- whereNotIn()
+
+ ```
+$db->table("student_score")->whereNotIn('id', [1, 2, 3, 4, 5, 6, 7, 8, 9])->select();
+
+SELECT * FROM student_score WHERE  id NOT IN (1,2,3,4,5,6,7,8,9) 
+```
+
+---
+
+- whereLike()
+
+```
+$db->table("student_score")->whereLike("name","%张%")->select()
+
+SELECT * FROM student_score WHERE  name LIKE '%张%'
+```
+
+- whereNotLike()
+
+```
+$db->table("student_score")->whereNotLike("name","%张%")->select();
+
+SELECT * FROM student_score WHERE  name NOT LIKE '%张%'
+```
+
+---
+
+- whereBetween()
+
+```
+$db->table("student_score")->whereBetween("id",[1,10])->select();
+
+或者
+
+$db->table("student_score")->whereBetween("id",'1,10')->select();
+
+
+"SELECT * FROM student_score WHERE  id BETWEEN 1 AND 10"
+```
+
+- whereNotBetween()
+
+```
+$db->table("student_score")->whereNotBetween("id",[1,10])->select();
+
+"SELECT * FROM student_score WHERE  id NOT BETWEEN 1 AND 10"
+```
+
+---
+
+- whereFindInSet()
+
+```
+$db->table("student_score")->whereFindInSet("remarks",3)->select();
+
+"SELECT * FROM student_score WHERE  FIND_IN_SET('3', remarks)"
+```
+
+---
+
+- whereColumn()
+
+> 字段比较
+
+```
+$db->table("student_score")->whereColumn("name","=","remarks","or")->whereColumn("name","=","id","or")->select();
+
+"SELECT * FROM student_score WHERE  ( name = remarks )  OR ( name = id )"
+```
+
+---
+
+- whereRaw()
+
+```
+$db->table("student_score")->whereRaw("name='张三'")->select();
+
+"SELECT * FROM student_score WHERE  ( name='张三' )"
+```
+
+- whereOrRaw()
+
+```
+$db->table("student_score")->whereOrRaw("name='张三'")->whereOrRaw("name='1'")->select();
+
+"SELECT * FROM student_score WHERE  ( name='张三' )  OR ( name='1' )"
+```
+
+---
+
+- when(表达式,表达式true要执行的，表达式false要执行的)
+
+```
+$a = 2;  
+$data = $db->table("student_score")->when($a == 1, function ($query) {  
+    $query->where("id",6);  
+}, function ($query) {  
+    $query->where("id",7);  
+})->select();
+
+"SELECT * FROM student_score WHERE  id = 7"
+```
+
+> false要执行的可省略
+
+```
+$a = 2;  
+$data = $db->table("student_score")->when($a == 1, function ($query) {  
+    $query->where("id",6);  
+})->select()
+
+"SELECT * FROM student_score"
+```
+
+### 子查询
+
+---
+使用buildSql()
+
+```
+$table = $db->table("student")->where("id",">=",2)->buildSql();  
+$data = $db->table($table ." newStudent")->where("id",2)->select();
+
+"SELECT * FROM ( SELECT * FROM student WHERE  id >= 2 ) newStudent WHERE  id = '2'"
+```
+
+---
+
+使用闭包查询
+
+```
+$db->table("student_score")->where("name","in",function($query){  
+    $query->table("student")->field("name");  
+})->select()
+
+"SELECT * FROM student_score WHERE  name IN (SELECT name FROM student)"
+```
+
+### 事务
+
+- 手动模式
+
+```
+$db = new \Dm\PhalconOrm\DbManager();  
+$db->setConnector($di->getShared('db'));  
+  
+try {  
+    $db->startTrans();  
+  
+    $data = (new TestModel)->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);  
+  
+    $db->commit();  
+} catch (\Exception $e) {  
+    var_dump($e->getMessage());  
+    $db->rollback();  
+}
+```
+
+---
+
+- 自动模式
+
+```
+$db = new \Dm\PhalconOrm\DbManager();  
+$db->setConnector($di->getShared('db'));  
+  
+$db->transaction(function () {  
+    $data = (new TestModel)->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);  
+    var_dump($data);  
+});
+```
+
+> transaction函数的闭包函数中，抛出异常自动回滚
+
+---
+
 # 模型
+
 
 ```
 每个模型需要继承 \Dm\PhalconOrm\model\Model 该类
@@ -685,4 +1002,7 @@ $mysql1 = $di->setShared('db', function () {
 
 使用新的Mysql连接类进行连接数据库
 ```
- 
+## 软删除
+
+## 自动时间戳
+

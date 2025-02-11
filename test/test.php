@@ -22,6 +22,11 @@ class TestModel extends OrmModel
          */
         $this->setSource('student_score');
     }
+
+    public function getNameZhAttr($value,$data)
+    {
+        return $data["name"]."zxczxczxc";
+    }
 }
 
 /**
@@ -66,10 +71,9 @@ $model = new TestModel;
 $db = new \Dm\PhalconOrm\DbManager();
 $db->setConnector($di->getShared('db'));
 
-$data = $db->table("student_score")->whereIn("id",[4,5])->fetchSql(true)->delete();
-//$data2 = TestModel::first(18);
+$db->transaction(function () {
+    $data = (new TestModel)->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
+    var_dump($data);
+});
 
-//$data = $db->fetchSql(true)->table("student_score")->where("id",">",10)->where("id","<","20")->update(["remarks" => "测试机1111"]);
-
-var_dump($data);
 exit;

@@ -13,10 +13,50 @@ use Phalcon\Mvc\Model as MvcModel;
 /**
  * @method static select()
  * @method static first()
- * @method static where()
- * @method static whereOr()
  * @method static order()
  * @method static limit()
+ * @method static value()
+ * @method static column()
+ * @method static insert()
+ * @method static save()
+ * @method static update()
+ * @method delete()
+ * @method static count()
+ * @method static max()
+ * @method static min()
+ * @method static avg()
+ * @method static sum()
+ * @method static alias()
+ * @method static field()
+ * @method static group()
+ * @method static having()
+ * @method static join()
+ * @method static union()
+ * @method static unionAll()
+ * @method static distinct()
+ * @method static lock()
+ * @method static fetchSql()
+ * @method static where()
+ * @method static whereOr()
+ * @method static whereNull()
+ * @method static whereNotNull()
+ * @method static whereExists()
+ * @method static whereNotExists()
+ * @method static whereIn()
+ * @method static whereNotIn()
+ * @method static whereLike()
+ * @method static whereNotLike()
+ * @method static whereBetween()
+ * @method static whereNotBetween()
+ * @method static whereFindInSet()
+ * @method static whereColumn()
+ * @method static whereRaw()
+ * @method static whereOrRaw()
+ * @method static when()
+ * @method static buildSql()
+ * @method static paginate()
+ * @method static withTrashed()
+ * @method static onlyTrashed()
  */
 abstract class Model extends MvcModel
 {
@@ -75,6 +115,12 @@ abstract class Model extends MvcModel
      */
     private $updateWhere;
 
+    /**
+     * 软删除字段默认值
+     * @var mixed
+     */
+    protected $defaultSoftDelete;
+
     public function initialize(): void
     {
         self::setDb(new DbManager());
@@ -92,6 +138,11 @@ abstract class Model extends MvcModel
             ->pk($this->pk);
 
         $query->model($this);
+
+        // 软删除
+        if (property_exists($this, 'withTrashed') && !$this->withTrashed) {
+            $this->withNoTrashed($query);
+        }
 
         return $query;
     }

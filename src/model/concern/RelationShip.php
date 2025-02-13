@@ -13,6 +13,13 @@ trait RelationShip
     private $relation = [];
 
     /**
+     * 关联自动写入信息.
+     *
+     * @var array
+     */
+    protected $relationWrite = [];
+
+    /**
      * 检查属性是否为关联属性 如果是则返回关联方法名.
      *
      * @param string $attr 关联属性名

@@ -310,17 +310,17 @@ abstract class BaseQuery
         $resultSet = $this->connection->select($this);
 
         // 返回结果处理
-//        if (!empty($this->options['fail']) && count($resultSet) == 0) {
-//            $this->throwNotFound();
-//        }
-//
-//        // 数据列表读取后的处理
-//        if (!empty($this->model)) {
-//            // 生成模型对象
-//            $resultSet = $this->resultSetToModelCollection($resultSet);
-//        } else {
-//            $this->resultSet($resultSet);
-//        }
+        if (!empty($this->options['fail']) && count($resultSet) == 0) {
+            $this->throwNotFound();
+        }
+
+        // 数据列表读取后的处理
+        if (!empty($this->model)) {
+            // 生成模型对象
+            $resultSet = $this->resultSetToModelCollection($resultSet);
+        } else {
+            $this->resultSet($resultSet);
+        }
 
         return $resultSet;
     }
@@ -819,7 +819,7 @@ abstract class BaseQuery
                 unset($this->options['soft_delete']);
                 $this->options['data'] = [$field => $condition];
 
-                return $this->connection->update($this);
+                return $this->connection->newUpdate($this);
             }
         }
 

@@ -6,6 +6,7 @@ namespace Dm\PhalconOrm\helper;
 use ArrayAccess;
 use ArrayIterator;
 use Countable;
+use Dm\PhalconOrm\model\Model;
 use IteratorAggregate;
 use JsonSerializable;
 use Dm\PhalconOrm\helper\contract\Arrayable;
@@ -46,8 +47,13 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
 
     public function toArray(): array
     {
+        return []; // $this->toArr()
+    }
+
+    public function toArr(): array
+    {
         return array_map(function ($value) {
-            return $value instanceof Arrayable ? $value->toArray() : $value;
+            return $value instanceof Model ? $value->toArr() : $value;
         }, $this->items);
     }
 
@@ -616,7 +622,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
-        return $this->toArray();
+        return $this->toArr();
     }
 
     /**
@@ -627,7 +633,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function toJson(int $options = JSON_UNESCAPED_UNICODE): string
     {
-        return json_encode($this->toArray(), $options);
+        return json_encode($this->toArr(), $options);
     }
 
     public function __toString()

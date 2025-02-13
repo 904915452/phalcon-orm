@@ -39,4 +39,16 @@ trait TableFieldInfo{
         }
         return $this->connection->getFieldsType($this->getTable());
     }
+
+    /**
+     * 获取字段类型信息.
+     * @param string $field 字段名
+     * @return string|null
+     */
+    public function getFieldType(string $field)
+    {
+        $fieldType = $this->getFieldsType();
+
+        return $fieldType[$field] ?? null;
+    }
 }

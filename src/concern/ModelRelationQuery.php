@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Dm\PhalconOrm\concern;
 
-
+use Dm\PhalconOrm\helper\Collection as ModelCollection;
 use Dm\PhalconOrm\model\Model;
 
 /**
@@ -132,5 +132,40 @@ trait ModelRelationQuery
 
             $result[$name] = !$this->options['json_assoc'] ? (object) $jsonData : $jsonData;
         }
+    }
+
+    /**
+     * 查询数据转换为模型数据集对象
+     * @param array $resultSet 数据集
+     * @return ModelCollection
+     */
+    protected function resultSetToModelCollection(array $resultSet): ModelCollection
+    {
+        if (empty($resultSet)) {
+            return $this->model->toCollection();
+        }
+
+        $this->options['is_resultSet'] = true;
+
+        foreach ($resultSet as $key => &$result) {
+            // 数据转换为模型对象
+            $this->resultToModel($result);
+        }
+
+//        foreach (['with', 'with_join'] as $with) {
+//            // 关联预载入
+//            if (!empty($this->options[$with])) {
+//                $result->eagerlyResultSet(
+//                    $resultSet,
+//                    $this->options[$with],
+//                    $this->options['with_relation_attr'],
+//                    'with_join' == $with,
+//                    $this->options['with_cache'] ?? false
+//                );
+//            }
+//        }
+
+        // 模型数据集转换
+        return $this->model->toCollection($resultSet);
     }
 }

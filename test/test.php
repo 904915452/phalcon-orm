@@ -2,11 +2,17 @@
 
 use Dm\PhalconOrm\model\Model as OrmModel;
 use Phalcon\Di\FactoryDefault;
+use Dm\PhalconOrm\model\concern\SoftDelete;
 
 require '../vendor/autoload.php';
 
 class TestModel extends OrmModel
 {
+    use SoftDelete;
+
+    protected $deleteTime = 'delete_time';
+    protected $defaultSoftDelete = null;
+
     /**
      * 主键名称
      * @var string
@@ -22,17 +28,9 @@ class TestModel extends OrmModel
          */
         $this->setSource('student_score');
     }
-
-    public function getNameZhAttr($value,$data)
-    {
-        return $data["name"]."zxczxczxc";
-    }
 }
 
-/**
- * 用于写入
- * 除了查询操作之外，field方法还有一个非常重要的安全功能--字段合法性检测。
- */
+
 
 
 /**
@@ -66,14 +64,12 @@ $mysql1 = $di->setShared('db', function () {
 
 
 // 实例
-$model = new TestModel;
 
-$db = new \Dm\PhalconOrm\DbManager();
-$db->setConnector($di->getShared('db'));
+//$model = new TestModel;
+//
+//$model->name = "张三1zxczxc";
+//
+//$data = $model->save();
 
-$db->transaction(function () {
-    $data = (new TestModel)->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
-    var_dump($data);
-});
-
+//var_dump($rt);
 exit;

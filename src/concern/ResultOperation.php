@@ -6,6 +6,7 @@ namespace Dm\PhalconOrm\concern;
 use Dm\PhalconOrm\exception\DataNotFoundException;
 use Dm\PhalconOrm\exception\DbException;
 use Dm\PhalconOrm\exception\ModelNotFoundException;
+use Dm\PhalconOrm\helper\Collection;
 use Dm\PhalconOrm\helper\Str;
 use Dm\PhalconOrm\model\Model;
 
@@ -97,6 +98,23 @@ trait ResultOperation
             $this->throwNotFound();
         } elseif (!empty($this->options['allow_empty'])) {
             return !empty($this->model) ? $this->model->newInstance() : [];
+        }
+    }
+
+    /**
+     * 处理数据集.
+     * @param array $resultSet    数据集
+     * @param bool  $toCollection 是否转为对象
+     * @return void
+     */
+    protected function resultSet(array &$resultSet, bool $toCollection = true): void
+    {
+        foreach ($resultSet as &$result) {
+            $this->result($result);
+        }
+        // 返回Collection对象
+        if ($toCollection) {
+            $resultSet = new Collection($resultSet);
         }
     }
 }

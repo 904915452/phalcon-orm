@@ -164,6 +164,7 @@
   },
   "active": "5f09b52c62a793c7",
   "lastOpenFiles": [
+    "src/model/concern/SoftDelete.php",
     "test/test.php~",
     "src/paginator/driver/Bootstrap.php",
     "src/paginator/driver",
@@ -174,7 +175,6 @@
     "src/model/concern/RelationShip.php",
     "src/concern/Transaction.php",
     "src/model/Relation.php",
-    "src/model/concern/Conversion.php",
     "Pasted image 20250123143832.png"
   ]
 }

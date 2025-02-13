@@ -9,17 +9,14 @@ use Exception;
  */
 class Builder extends BaseBuilder
 {
-
-
     /**
      * 数据分析.
-     *
-     * @param Query $query  查询对象
-     * @param array $data   数据
+     * @param Query $query 查询对象
+     * @param array $data 数据
      * @param array $fields 字段信息
-     * @param array $bind   参数绑定
-     *
+     * @param array $bind 参数绑定
      * @return array
+     * @throws Exception
      */
     protected function parseData(Query $query, array $data = [], array $fields = [], array $bind = []): array
     {

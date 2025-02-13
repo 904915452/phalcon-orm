@@ -3,6 +3,7 @@ namespace Dm\PhalconOrm\builder;
 
 use Dm\PhalconOrm\Builder;
 use Dm\PhalconOrm\Query;
+use Dm\PhalconOrm\Raw;
 use Exception;
 
 class Mysql extends Builder
@@ -130,63 +131,6 @@ class Mysql extends Builder
             ],
             $this->insertSql
         );
-    }
-
-    /**
-     * Partition 分析.
-     * @param Query        $query     查询对象
-     * @param string|array $partition 分区
-     * @return string
-     */
-    protected function parsePartition(Query $query, $partition): string
-    {
-        if ('' == $partition) {
-            return '';
-        }
-
-        if (is_string($partition)) {
-            $partition = explode(',', $partition);
-        }
-
-        return ' PARTITION (' . implode(' , ', $partition) . ') ';
-    }
-
-    /**
-     * ON DUPLICATE KEY UPDATE 分析.
-     *
-     * @param Query $query     查询对象
-     * @param mixed $duplicate
-     *
-     * @return string
-     */
-    protected function parseDuplicate(Query $query, $duplicate): string
-    {
-        if ('' == $duplicate) {
-            return '';
-        }
-
-        if ($duplicate instanceof Raw) {
-            return ' ON DUPLICATE KEY UPDATE ' . $this->parseRaw($query, $duplicate) . ' ';
-        }
-
-        if (is_string($duplicate)) {
-            $duplicate = explode(',', $duplicate);
-        }
-
-        $updates = [];
-        foreach ($duplicate as $key => $val) {
-            if (is_numeric($key)) {
-                $val       = $this->parseKey($query, $val);
-                $updates[] = $val . ' = VALUES(' . $val . ')';
-            } elseif ($val instanceof Raw) {
-                $updates[] = $this->parseKey($query, $key) . ' = ' . $this->parseRaw($query, $val);
-            } else {
-                $name      = $query->bindValue($val, $query->getConnection()->getFieldBindType($key));
-                $updates[] = $this->parseKey($query, $key) . ' = :' . $name;
-            }
-        }
-
-        return ' ON DUPLICATE KEY UPDATE ' . implode(' , ', $updates) . ' ';
     }
 
     /**
@@ -323,5 +267,186 @@ class Mysql extends Builder
         }
 
         return 'FIND_IN_SET(' . $value . ', ' . $key . ')';
+    }
+
+    /**
+     * Partition 分析.
+     * @param Query        $query     查询对象
+     * @param string|array $partition 分区
+     * @return string
+     */
+    protected function parsePartition(Query $query, $partition): string
+    {
+        if ('' == $partition) {
+            return '';
+        }
+
+        if (is_string($partition)) {
+            $partition = explode(',', $partition);
+        }
+
+        return ' PARTITION (' . implode(' , ', $partition) . ') ';
+    }
+
+    /**
+     * ON DUPLICATE KEY UPDATE 分析.
+     * @param Query $query     查询对象
+     * @param mixed $duplicate
+     * @return string
+     */
+    protected function parseDuplicate(Query $query, $duplicate): string
+    {
+        if ('' == $duplicate) {
+            return '';
+        }
+
+        if ($duplicate instanceof Raw) {
+            return ' ON DUPLICATE KEY UPDATE ' . $this->parseRaw($query, $duplicate) . ' ';
+        }
+
+        if (is_string($duplicate)) {
+            $duplicate = explode(',', $duplicate);
+        }
+
+        $updates = [];
+        foreach ($duplicate as $key => $val) {
+            if (is_numeric($key)) {
+                $val       = $this->parseKey($query, $val);
+                $updates[] = $val . ' = VALUES(' . $val . ')';
+            } elseif ($val instanceof Raw) {
+                $updates[] = $this->parseKey($query, $key) . ' = ' . $this->parseRaw($query, $val);
+            } else {
+                $name      = $query->bindValue($val, $query->getConnection()->getFieldBindType($key));
+                $updates[] = $this->parseKey($query, $key) . ' = :' . $name;
+            }
+        }
+
+        return ' ON DUPLICATE KEY UPDATE ' . implode(' , ', $updates) . ' ';
+    }
+
+    /**
+     * 字段和表名处理.
+     *
+     * @param Query $query  查询对象
+     * @param mixed $key    字段名
+     * @param bool  $strict 严格检测
+     *
+     * @return string
+     */
+    public function parseKey(Query $query, string | int | Raw $key, bool $strict = false): string
+    {
+        if (is_int($key)) {
+            return (string) $key;
+        }
+
+        if ($key instanceof Raw) {
+            return $this->parseRaw($query, $key);
+        }
+
+        $key = trim($key);
+
+        if (str_contains($key, '->>') && !str_contains($key, '(')) {
+            // JSON字段支持
+            [$field, $name] = explode('->>', $key, 2);
+
+            return $this->parseKey($query, $field, true) . '->>\'$' . (str_starts_with($name, '[') ? '' : '.') . str_replace('->>', '.', $name) . '\'';
+        }
+
+        if (str_contains($key, '->') && !str_contains($key, '(')) {
+            // JSON字段支持
+            [$field, $name] = explode('->', $key, 2);
+
+            return 'json_extract(' . $this->parseKey($query, $field, true) . ', \'$' . (str_starts_with($name, '[') ? '' : '.') . str_replace('->', '.', $name) . '\')';
+        }
+
+        if (str_contains($key, '.') && !preg_match('/[,\'\"\(\)`\s]/', $key)) {
+            [$table, $key] = explode('.', $key, 2);
+
+            $alias = $query->getOptions('alias');
+
+            if ('__TABLE__' == $table) {
+                $table = $query->getOptions('table');
+                $table = is_array($table) ? array_shift($table) : $table;
+            }
+
+            if (isset($alias[$table])) {
+                $table = $alias[$table];
+            }
+        }
+
+        if ($strict && !preg_match('/^[\w\.\*]+$/', $key)) {
+            throw new Exception('not support data:' . $key);
+        }
+
+        if ('*' != $key && !preg_match('/[,\'\"\*\(\)`.\s]/', $key)) {
+            $key = '`' . $key . '`';
+        }
+
+        if (isset($table)) {
+            if (str_contains($table, '.')) {
+                $table = str_replace('.', '`.`', $table);
+            }
+
+            $key = '`' . $table . '`.' . $key;
+        }
+
+        return $key;
+    }
+
+    /**
+     * Null查询.
+     *
+     * @param Query  $query    查询对象
+     * @param string $key
+     * @param string $exp
+     * @param mixed  $value
+     * @param string $field
+     * @param int    $bindType
+     *
+     * @return string
+     */
+    protected function parseNull(Query $query, string $key, string $exp, $value, $field, int $bindType): string
+    {
+        if (str_starts_with($key, "json_extract")) {
+            if ('NULL' === $exp) {
+                return '(' . $key . ' is null OR json_type(' . $key . ') = \'NULL\')';
+            } elseif ('NOT NULL' === $exp) {
+                return '(' . $key . ' is not null AND json_type(' . $key . ') != \'NULL\')';
+            }
+        }
+
+        return parent::parseNull($query, $key, $exp, $value, $field, $bindType);
+    }
+
+    /**
+     * 随机排序.
+     *
+     * @param Query $query 查询对象
+     *
+     * @return string
+     */
+    protected function parseRand(Query $query): string
+    {
+        return 'rand()';
+    }
+
+    /**
+     * 正则查询.
+     *
+     * @param Query  $query 查询对象
+     * @param string $key
+     * @param string $exp
+     * @param mixed  $value
+     * @param string $field
+     *
+     * @return string
+     */
+    protected function parseRegexp(Query $query, string $key, string $exp, $value, string $field): string
+    {
+        if ($value instanceof Raw) {
+            $value = $this->parseRaw($query, $value);
+        }
+
+        return $key . ' ' . $exp . ' ' . $value;
     }
 }

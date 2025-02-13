@@ -242,7 +242,7 @@ trait Conversion
                 }
                 // 关联模型对象
                 if (!array_key_exists($key, $this->relation) || (array_key_exists($key, $this->with) && (!isset($hidden[$key]) || true !== $hidden[$key]))) {
-                    $item[$key] = $val->toArray();
+                    $item[$key] = $val->toArr();
                 }
             } elseif (isset($visible[$key])) {
                 $item[$key] = $this->getAttr($key);
@@ -341,7 +341,7 @@ trait Conversion
      */
     public function toJson(int $options = JSON_UNESCAPED_UNICODE): string
     {
-        return json_encode($this->toArray(), $options);
+        return json_encode($this->toArr(), $options);
     }
 
     public function __toString()
@@ -352,7 +352,7 @@ trait Conversion
     // JsonSerializable
     public function jsonSerialize(): array
     {
-        return $this->toArray();
+        return $this->toArr();
     }
 
     /**

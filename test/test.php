@@ -13,8 +13,8 @@ class TestModel extends OrmModel
     protected $autoWriteTimestamp = true;
 
     // 定义时间戳字段名
-//    protected $createTime = 'create_date';
-//    protected $updateTime = 'update_date';
+    protected $createTime = 'create_date';
+    protected $updateTime = 'update_date';
     protected $deleteTime = 'delete_time';
     protected $defaultSoftDelete = null;
 

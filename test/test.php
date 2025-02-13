@@ -10,6 +10,11 @@ class TestModel extends OrmModel
 {
     use SoftDelete;
 
+    protected $autoWriteTimestamp = true;
+
+    // 定义时间戳字段名
+//    protected $createTime = 'create_date';
+//    protected $updateTime = 'update_date';
     protected $deleteTime = 'delete_time';
     protected $defaultSoftDelete = null;
 
@@ -33,18 +38,6 @@ class TestModel extends OrmModel
 
 
 
-/**
- * 如果用于insertAll方法的话，则可以分批多次写入，每次最多写入limit方法指定的数量。
- *
- * Db::table('user')
- * ->limit(100)
- * ->insertAll($userList);
- */
-
-/**
- * cache方法 可以缓存查询结果，下次查询时直接从缓存中读取，而不需要再次查询数据库。
- */
-
 
 // 模拟配置文件连接数据库
 $di = new FactoryDefault();
@@ -65,11 +58,11 @@ $mysql1 = $di->setShared('db', function () {
 
 // 实例
 
-//$model = new TestModel;
-//
-//$model->name = "张三1zxczxc";
-//
-//$data = $model->save();
+$model = TestModel::first(37);
 
-//var_dump($rt);
+$model->name = "张三1qweqwezxc";
+
+$data = $model->save();
+
+var_dump($data);
 exit;

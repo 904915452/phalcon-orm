@@ -1424,3 +1424,59 @@ SELECT * FROM `student_score` WHERE `student_score`.`delete_time` IS NOT NULL
 
 
 ## 自动时间戳
+
+### 如何开启
+
+> 自动写入创建和更新的时间戳字段（默认关闭）
+
+```
+class TestModel extends OrmModel  
+{  
+    protected $autoWriteTimestamp = true;
+}
+```
+
+> 默认写入字段为 `create_time`和`update_time`
+
+例如：
+```
+$model = new TestModel;  
+$model->name = "张三1zxczxc";    
+$data = $model->save();
+```
+
+会自动向数据库中`create_time`和`update_time`字段写入当前`时间戳`
+
+------
+### 修改字段名称
+
+```
+protected $createTime = 'create_date';  
+protected $updateTime = 'update_date';
+```
+
+---
+
+### 修改字段存储的值类型
+
+- datetime 时间格式
+
+> 自动时间戳字段数据类型修改为时间明文
+
+
+```
+1.数据库中 创建时间、修改时间字段 数据类型修改为datetime
+
+2.protected $autoWriteTimestamp = "datetime";
+```
+
+数据库中存储的格式则自动更改为 `2025-02-13 12:06:55`
+
+- 时间戳格式
+
+```
+protected $autoWriteTimestamp = true;
+```
+
+---
+

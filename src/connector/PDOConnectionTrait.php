@@ -153,13 +153,16 @@ trait PDOConnectionTrait
             $this->bind = $bind;
 
             // 预处理
-            $this->PDOStatement = $this->pdo->prepare($sql);
+//            $this->PDOStatement = $this->pdo->prepare($sql);
+            $this->PDOStatement = $this->prepare($sql);
+
 
             // 参数绑定
             $this->bindValue($bind);
 
             // 执行查询
-            $this->PDOStatement->execute();
+//            $this->PDOStatement->execute();
+            $this->executePrepared($this->PDOStatement, [], []);
 
             // SQL监控
 //            if (!empty($this->config['trigger_sql'])) {
@@ -727,11 +730,11 @@ trait PDOConnectionTrait
 
     /**
      * 批量插入记录.
-     * @param BaseQuery $query   查询对象
-     * @param array     $dataSet 数据集
-     * @throws \Exception
-     * @throws \Throwable
+     * @param BaseQuery $query 查询对象
+     * @param array $dataSet 数据集
      * @return int
+     * @throws \Throwable
+     * @throws \Exception
      */
     public function insertAll(BaseQuery $query, array $dataSet = []): int
     {
@@ -742,7 +745,7 @@ trait PDOConnectionTrait
         $options = $query->parseOptions();
 
         if (!empty($options['limit']) && is_numeric($options['limit'])) {
-            $limit = (int) $options['limit'];
+            $limit = (int)$options['limit'];
         } else {
             $limit = 0;
         }
@@ -766,7 +769,7 @@ trait PDOConnectionTrait
 
                 // 提交事务
                 $this->commit();
-            } catch (\Exception  | \Throwable $e) {
+            } catch (\Exception|\Throwable $e) {
                 $this->rollback();
 
                 throw $e;
@@ -783,8 +786,8 @@ trait PDOConnectionTrait
     /**
      * 删除记录.
      * @param BaseQuery $query 查询对象
-     * @throws PDOException
      * @return int
+     * @throws PDOException
      */
     public function del(BaseQuery $query): int
     {
@@ -814,7 +817,7 @@ trait PDOConnectionTrait
      * @throws DbException
      * @throws Throwable
      */
-    public function aggregate(BaseQuery $query, string $aggregate, string | Raw $field, bool $force = false)
+    public function aggregate(BaseQuery $query, string $aggregate, string|Raw $field, bool $force = false)
     {
         if (is_string($field) && 0 === stripos($field, 'DISTINCT ')) {
             [$distinct, $field] = explode(' ', $field);
@@ -824,6 +827,6 @@ trait PDOConnectionTrait
 
         $result = $this->value($query, $field, 0, false);
 
-        return $force ? (float) $result : $result;
+        return $force ? (float)$result : $result;
     }
 }

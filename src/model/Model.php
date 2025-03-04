@@ -179,7 +179,7 @@ abstract class Model extends MvcModel
      * @param string|null $sequence 自增序列名
      * @return bool
      */
-    public function save(array | object $data = [], string $sequence = null): bool
+    public function save(array|object $data = [], string $sequence = null): bool
     {
         if ($data instanceof Model) {
             $data = $data->getData();
@@ -213,7 +213,7 @@ abstract class Model extends MvcModel
 
         // 重新记录原始数据
         $this->origin = $this->data;
-        $this->get    = [];
+        $this->get = [];
 
         return true;
     }
@@ -284,9 +284,13 @@ abstract class Model extends MvcModel
         return empty($this->data);
     }
 
-    protected function checkData(): void {}
+    protected function checkData(): void
+    {
+    }
 
-    protected function checkResult($result): void {}
+    protected function checkResult($result): void
+    {
+    }
 
     /**
      * 检查数据是否允许写入.
@@ -352,7 +356,7 @@ abstract class Model extends MvcModel
 
         if ($this->autoWriteTimestamp && $this->updateTime) {
             // 自动写入更新时间
-            $data[$this->updateTime]       = $this->autoWriteTimestamp();
+            $data[$this->updateTime] = $this->autoWriteTimestamp();
             $this->data[$this->updateTime] = $data[$this->updateTime];
         }
 
@@ -376,8 +380,8 @@ abstract class Model extends MvcModel
 
         $db->transaction(function () use ($data, $allowFields, $db) {
             $this->key = null;
-            $where     = $this->getWhere();
-            $result    = $db->where($where)
+            $where = $this->getWhere();
+            $result = $db->where($where)
                 ->strict(false)
 //                ->cache(true)
                 ->setOption('key', $this->key)
@@ -415,12 +419,12 @@ abstract class Model extends MvcModel
         // 时间戳自动写入
         if ($this->autoWriteTimestamp) {
             if ($this->createTime && !array_key_exists($this->createTime, $data)) {
-                $data[$this->createTime]       = $this->autoWriteTimestamp();
+                $data[$this->createTime] = $this->autoWriteTimestamp();
                 $this->data[$this->createTime] = $data[$this->createTime];
             }
 
             if ($this->updateTime && !array_key_exists($this->updateTime, $data)) {
-                $data[$this->updateTime]       = $this->autoWriteTimestamp();
+                $data[$this->updateTime] = $this->autoWriteTimestamp();
                 $this->data[$this->updateTime] = $data[$this->updateTime];
             }
         }
@@ -465,8 +469,8 @@ abstract class Model extends MvcModel
 
     /**
      * 创建新的模型实例.
-     * @param array $data    数据
-     * @param mixed $where   更新条件
+     * @param array $data 数据
+     * @param mixed $where 更新条件
      * @param array $options 参数
      *
      * @return Model
@@ -508,8 +512,8 @@ abstract class Model extends MvcModel
 
     /**
      * 修改器 设置数据对象的值
-     * @param string $name  名称
-     * @param mixed  $value 值
+     * @param string $name 名称
+     * @param mixed $value 值
      * @return void
      */
     public function __set(string $name, $value): void
@@ -551,9 +555,22 @@ abstract class Model extends MvcModel
         );
     }
 
+    public function readAttribute(string $attribute)
+    {
+        if (!isset($this->$attribute))  {
+            return null;
+        }
+        return $this->$attribute;
+    }
+
     public function __call($method, $arguments)
     {
-        return call_user_func_array([$this->db(), $method], $arguments);
+        $query = $this->db();
+        if (in_array($method, get_class_methods($query))) {
+            return call_user_func_array([$query, $method], $arguments);
+        } else {
+            return parent::__call($method, $arguments);
+        }
     }
 
     public static function __callStatic($method, $arguments)

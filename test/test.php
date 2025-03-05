@@ -24,6 +24,10 @@ class TestModel extends OrmModel
      */
     protected string $pk = 'id';
 
+    protected $id;
+
+    protected  $name;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -31,7 +35,7 @@ class TestModel extends OrmModel
         /**
          * 设置表名
          */
-        $this->setSource('student_score');
+        $this->setSource('student');
     }
 }
 
@@ -56,13 +60,13 @@ $mysql1 = $di->setShared('db', function () {
 });
 
 
+
 // 实例
+$model = new TestModel();
+//$model = TestModel::;
+$model->assign(['name' => 'liam','sex' => '男','number' => '18211128']);
 
-$model = TestModel::first(37);
+$rt = $model->save();
 
-$model->name = "张三1qweqwezxc";
-
-$data = $model->save();
-
-var_dump($data);
+var_dump($rt);
 exit;

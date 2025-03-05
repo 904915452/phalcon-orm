@@ -4,7 +4,13 @@ use Phalcon\Di\FactoryDefault;
 
 require '../vendor/autoload.php';
 
-class StudentModel extends \Phalcon\Mvc\Model{
+class StudentModel extends \Phalcon\Mvc\Model
+{
+
+    public $id;
+
+    public $name;
+
     public function initialize()
     {
         $this->setSource('student');
@@ -12,7 +18,8 @@ class StudentModel extends \Phalcon\Mvc\Model{
     }
 }
 
-class StudentScoreModel extends \Phalcon\Mvc\Model{
+class StudentScoreModel extends \Phalcon\Mvc\Model
+{
     public function initialize()
     {
         $this->setSource('student_score');
@@ -37,8 +44,19 @@ $mysql1 = $di->setShared('db', function () {
     return new $class($params);
 });
 
-$data = StudentModel::findFirst(['conditions' => "name = :name:", "bind" => ["name" => "张三"]]);
+//$data = StudentModel::findFirst(['conditions' => "name = :name:", "bind" => ["name" => "张三"]]);
 
-var_dump($data->id);
+//var_dump($data->id);
 //var_dump($data->getStudentScoreModel());exit;
-var_dump($data->toArray(), $data->getStudentScoreModel()->toArray());exit;
+//var_dump($data->toArray(), $data->getStudentScoreModel()->toArray());exit;
+
+$model = new StudentModel();
+$model->assign(['name' => 'liam',
+    'sex' => '男']);
+
+var_dump($model->name, $model->sex);
+exit;
+
+$rt = $model->save();
+var_dump($rt);
+exit;

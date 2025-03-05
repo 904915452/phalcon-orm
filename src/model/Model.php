@@ -9,6 +9,7 @@ use Dm\PhalconOrm\model\concern\RelationShip;
 use Dm\PhalconOrm\model\concern\TimeStamp;
 use Dm\PhalconOrm\Query;
 use Phalcon\Mvc\Model as MvcModel;
+use Phalcon\Mvc\ModelInterface;
 
 /**
  * @method static select()
@@ -195,7 +196,6 @@ abstract class Model extends MvcModel
 //        }
 
         $result = $this->exists ? $this->updateData() : $this->insertData($sequence);
-
         if (false === $result) {
             return false;
         }
@@ -414,7 +414,9 @@ abstract class Model extends MvcModel
 //        }
 
         $this->checkData();
+
         $data = $this->data;
+
 
         // 时间戳自动写入
         if ($this->autoWriteTimestamp) {
@@ -555,14 +557,6 @@ abstract class Model extends MvcModel
         );
     }
 
-    public function readAttribute(string $attribute)
-    {
-        if (!isset($this->$attribute))  {
-            return null;
-        }
-        return $this->$attribute;
-    }
-
     public function __call($method, $arguments)
     {
         $query = $this->db();
@@ -577,5 +571,27 @@ abstract class Model extends MvcModel
     {
         $model = new static();
         return call_user_func_array([$model->db(), $method], $arguments);
+    }
+
+
+    # 以下为重写phalcon基方法
+
+    public function readAttribute(string $attribute)
+    {
+        if (!isset($this->$attribute)) {
+            return null;
+        }
+        return $this->$attribute;
+    }
+
+    public function assign(array $data, $whiteList = null, $dataColumnMap = null): ModelInterface
+    {
+//        parent::assign($data, $whiteList, $dataColumnMap);
+
+        foreach ($data as $key => $value) {
+            $this->setAttr($key, $value);
+        }
+
+        return $this;
     }
 }

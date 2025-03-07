@@ -195,7 +195,8 @@ abstract class Model extends MvcModel
 //            return false;
 //        }
 
-        $result = $this->exists ? $this->updateData() : $this->insertData($sequence);
+        $result = $this->isExists() ? $this->updateData() : $this->insertData($sequence);
+
         if (false === $result) {
             return false;
         }
@@ -271,7 +272,7 @@ abstract class Model extends MvcModel
      */
     public function isExists(): bool
     {
-        return $this->exists;
+        return $this->exists ||  $this->has($this->getModelsMetaData(),$this->getReadConnection());
     }
 
     /**
@@ -414,9 +415,7 @@ abstract class Model extends MvcModel
 //        }
 
         $this->checkData();
-
         $data = $this->data;
-
 
         // 时间戳自动写入
         if ($this->autoWriteTimestamp) {
@@ -572,7 +571,6 @@ abstract class Model extends MvcModel
         $model = new static();
         return call_user_func_array([$model->db(), $method], $arguments);
     }
-
 
     # 以下为重写phalcon基方法
 

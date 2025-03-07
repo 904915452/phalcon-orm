@@ -26,7 +26,7 @@ class TestModel extends OrmModel
 
     protected $id;
 
-    protected  $name;
+    protected $name;
 
     public function initialize(): void
     {
@@ -38,9 +38,6 @@ class TestModel extends OrmModel
         $this->setSource('student');
     }
 }
-
-
-
 
 
 // 模拟配置文件连接数据库
@@ -60,13 +57,15 @@ $mysql1 = $di->setShared('db', function () {
 });
 
 
-
 // 实例
 $model = new TestModel();
-//$model = TestModel::;
-$model->assign(['name' => 'liam','sex' => '男','number' => '18211128']);
-
+$model->name = 'qweqweqwe
+';
+//$model->assign(['name' => 'liam', 'sex' => '男', 'number' => '18211128', 'asdasd' => 'zxczxc']);
+//
 $rt = $model->save();
+
+
 
 var_dump($rt);
 exit;

@@ -74,8 +74,7 @@
               "title": "书签"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -164,7 +163,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "97ef2bfefb279d26",
+  "active": "5f09b52c62a793c7",
   "lastOpenFiles": [
     "src/model/concern/SoftDelete.php",
     "test/test.php~",

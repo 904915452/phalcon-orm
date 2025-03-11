@@ -19,7 +19,7 @@ use Phalcon\Mvc\ModelInterface;
  * @method static value()
  * @method static column()
  * @method static insert()
- * @method static save()
+ * @method static hold()
  * @method static update()
  * @method delete()
  * @method static count()
@@ -180,7 +180,7 @@ abstract class Model extends MvcModel
      * @param string|null $sequence 自增序列名
      * @return bool
      */
-    public function save(array|object $data = [], string $sequence = null): bool
+    public function hold(array|object $data = [], string $sequence = null): bool
     {
         if ($data instanceof Model) {
             $data = $data->getData();
@@ -272,7 +272,7 @@ abstract class Model extends MvcModel
      */
     public function isExists(): bool
     {
-        return $this->exists ||  $this->has($this->getModelsMetaData(),$this->getReadConnection());
+        return $this->exists || $this->has($this->getModelsMetaData(), $this->getReadConnection());
     }
 
     /**
@@ -339,6 +339,7 @@ abstract class Model extends MvcModel
 //        if (false === $this->trigger('BeforeUpdate')) {
 //            return false;
 //        }
+
 
         $this->checkData();
 
@@ -584,7 +585,7 @@ abstract class Model extends MvcModel
 
     public function assign(array $data, $whiteList = null, $dataColumnMap = null): ModelInterface
     {
-//        parent::assign($data, $whiteList, $dataColumnMap);
+        parent::assign($data, $whiteList, $dataColumnMap);
 
         foreach ($data as $key => $value) {
             $this->setAttr($key, $value);

@@ -150,7 +150,7 @@ class Fetch
      * @return string
      * @throws Exception
      */
-    public function save(array $data = [], bool $forceInsert = false): string
+    public function hold(array $data = [], bool $forceInsert = false): string
     {
         if ($forceInsert) {
             return $this->insert($data);

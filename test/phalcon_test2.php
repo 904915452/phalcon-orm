@@ -39,24 +39,13 @@ $mysql1 = $di->setShared('db', function () {
         'dbname' => 'test',
         'charset' => 'utf8mb4',
         "options" => [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_STRINGIFY_FETCHES => false, PDO::ATTR_EMULATE_PREPARES => false],
-        'fields_strict' => true, // 是否开启字段严格检查 某个字段不存在时，是否抛出异常
     ];
     return new $class($params);
 });
 
-//$data = StudentModel::findFirst(['conditions' => "name = :name:", "bind" => ["name" => "张三"]]);
 
-//var_dump($data->id);
-//var_dump($data->getStudentScoreModel());exit;
-//var_dump($data->toArray(), $data->getStudentScoreModel()->toArray());exit;
+$model = new StudentModel;
+$manager = $model->getModelsManager();
 
-$model = new StudentModel();
-$model->assign(['name' => 'liam',
-    'sex' => '男']);
-
-var_dump($model->name, $model->sex);
-exit;
-
-$rt = $model->save();
+$rt = $manager->executeQuery('update ' . StudentModel::class . ' set name = "test" where id = :id:', ['id' => 15]);
 var_dump($rt);
-exit;

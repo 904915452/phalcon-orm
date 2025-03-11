@@ -13,9 +13,10 @@ class TestModel extends OrmModel
     protected $autoWriteTimestamp = true;
 
     // 定义时间戳字段名
-    protected $createTime = 'create_date';
-    protected $updateTime = 'update_date';
+//    protected $createTime = 'create_date';
+//    protected $updateTime = 'update_date';
     protected $deleteTime = 'delete_time';
+
     protected $defaultSoftDelete = null;
 
     /**
@@ -55,17 +56,17 @@ $mysql1 = $di->setShared('db', function () {
     ];
     return new $class($params);
 });
+$db = new \Dm\PhalconOrm\DbManager();
+$db->setConnector($di->getShared('db'));
 
-
-// 实例
 $model = new TestModel();
-$model->name = 'qweqweqwe
-';
-//$model->assign(['name' => 'liam', 'sex' => '男', 'number' => '18211128', 'asdasd' => 'zxczxc']);
-//
-$rt = $model->save();
 
+$manager = $model->getModelsManager();
+//$rt = $manager->executeQuery('update ' . TestModel::class . ' set name = "test" where id = :id:', ['id' => 15]);
+//$rt = $manager->executeQuery('select * from ' . TestModel::class);
+//$rt = $manager->executeQuery('DELETE FROM ' . TestModel::class . ' WHERE id = :id:', ['id' => 16]);
+//var_dump($rt);
 
-
-var_dump($rt);
+$data = TestModel::destroy(17);
+var_dump($data);
 exit;

@@ -50,7 +50,7 @@ $db = new \Dm\PhalconOrm\DbManager();
 
 $db->setConnector($di->getShared('db'));
 
-$data = $db->table("student_score")->save(["name" => "王五20222", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 20]);
+$data = $db->table("student_score")->hold(["name" => "王五20222", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 20]);
 
 ```
 
@@ -182,11 +182,11 @@ $db->table("student_score")
 
 | 9 | 张三 | 计算机 | 62 | 1821111 |
 
-- save()
+- hold()
 
 ```
 
-$model->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
+$model->hold(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
 
 INSERT INTO student_score SET name = '王五' , subject = '计算机' , score = 71 , class = '182112'
 
@@ -196,7 +196,7 @@ INSERT INTO student_score SET name = '王五' , subject = '计算机' , score = 
 
 ```
 
-$db->table("student_score")->save(["name" => "王五222", "subject" => "计算机", "score" => 733, "class" => 182112]);
+$db->table("student_score")->hold(["name" => "王五222", "subject" => "计算机", "score" => 733, "class" => 182112]);
 
 ```
 
@@ -210,7 +210,7 @@ $db->table("student_score")->save(["name" => "王五222", "subject" => "计算�
 
 ```
 
-$data = $model->replace()->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"id" => 19]);
+$data = $model->replace()->hold(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"id" => 19]);
 
 ```
 
@@ -258,17 +258,17 @@ $data = $db->table("student_score")->replace()->insertAll([
 
 ### 更新数据
 
-- save()
+- hold()
 
 ```
 
-$data = $db->table("student_score")->save(["name" => "王五20222", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 20]);
+$data = $db->table("student_score")->hold(["name" => "王五20222", "subject" => "计算机", "score" => 72, "class" => 182112, "id" => 20]);
 
 $model = TestModel::first(17);
 
 $model->name = "张三1zxczxc";
 
-$model->save();
+$model->hold();
 
 ```
 
@@ -1259,7 +1259,7 @@ try {
 
 $db->startTrans();
 
-$data = (new TestModel)->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
+$data = (new TestModel)->hold(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
 
 $db->commit();
 
@@ -1285,7 +1285,7 @@ $db->setConnector($di->getShared('db'));
 
 $db->transaction(function () {
 
-$data = (new TestModel)->save(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
+$data = (new TestModel)->hold(["name" => "王五", "subject" => "计算机", "score" => 71, "class" => 182112,"asdasd" => "zxc"]);
 
 var_dump($data);
 
@@ -1442,7 +1442,7 @@ class TestModel extends OrmModel
 ```
 $model = new TestModel;  
 $model->name = "张三1zxczxc";    
-$data = $model->save();
+$data = $model->hold();
 ```
 
 会自动向数据库中`create_time`和`update_time`字段写入当前`时间戳`

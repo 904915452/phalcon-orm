@@ -723,7 +723,7 @@ abstract class BaseQuery
      * @return int
      * @throws Exception
      */
-    public function save(array $data = [], bool $forceInsert = false)
+    public function hold(array $data = [], bool $forceInsert = false)
     {
         if ($forceInsert) {
             return $this->insert($data);

@@ -18,7 +18,7 @@ use Phalcon\Db\Adapter\AdapterInterface;
  * @method value()
  * @method column()
  * @method insert()
- * @method save()
+ * @method hold()
  * @method update()
  * @method delete()
  * @method count()

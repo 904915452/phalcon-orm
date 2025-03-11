@@ -75,7 +75,7 @@ trait SoftDelete
             // 软删除
             $this->set($name, $this->autoWriteTimestamp());
 
-            $this->exists()->save();
+            $this->exists()->hold();
 //            $this->exists()->withEvent(false)->save();
 //            $this->withEvent(true);
         } else {

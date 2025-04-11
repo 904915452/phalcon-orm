@@ -272,7 +272,7 @@ abstract class Model extends MvcModel
      */
     public function isExists(): bool
     {
-        return $this->exists || $this->has($this->getModelsMetaData(), $this->getReadConnection());
+        return $this->exists || $this->_exists($this->getModelsMetaData(), $this->getReadConnection());
     }
 
     /**

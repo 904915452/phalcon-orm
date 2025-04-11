@@ -7,6 +7,9 @@ use Dm\PhalconOrm\model\concern\SoftDelete;
 
 try {
 
+    /**
+     * @property $name
+     */
     class TestModel extends OrmModel
     {
 //        use SoftDelete;
@@ -27,7 +30,6 @@ try {
 
         public $id;
 
-        public $name;
 
         public function initialize(): void
         {
@@ -63,9 +65,10 @@ try {
 //    var_dump(TestModel::whereIn("id", [1, 2, 3])->select()->toArr());
 //    var_dump(TestModel::where(["id" => [1, 2, 3]])->select()->toArr());
 
-//    $model = new TestModel();
-//    $model->name = 'wangyuchang';
-//    var_dump($model->save());
+    $model = new TestModel();
+    $model->name = 'wangyuchang2222';
+    var_dump($model->hold()); // 当model没定义数据库中的某个字段为属性时 用hold() 调用phalcon原生保存
+//    var_dump($model->save()); // 当model定义了 数据库中的某个字段为属性时 用save() 调用phalcon原生保存
 
 //    $rt = TestModel::whereNull("sex")->update(["sex" => "女"]);
 
@@ -73,8 +76,8 @@ try {
 
 //    $rt = TestModel::where("id",21)->delete();
 
-    $rt = TestModel::order("name","desc")->limit(5)->select()->toArr();
-    var_dump($rt);
+//    $rt = TestModel::order("name","desc")->limit(5)->select()->toArr();
+//    var_dump($rt);
 
 
 } catch (\Throwable $e) {

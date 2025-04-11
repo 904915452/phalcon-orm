@@ -107,7 +107,7 @@ abstract class BaseQuery
      */
     public function table($table)
     {
-        if (is_string($table) && strpos($table, ')') === false) {
+        if (is_string($table) && (strpos($table, ')') === false)) {
             $table = $this->tableStr($table);
         } elseif (is_array($table)) {
             $table = $this->tableArr($table);

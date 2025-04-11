@@ -514,13 +514,13 @@ abstract class Model extends MvcModel
 
     /**
      * 修改器 设置数据对象的值
-     * @param string $name 名称
+     * @param string $property 名称
      * @param mixed $value 值
      * @return void
      */
-    public function __set(string $name, $value): void
+    public function __set($property, $value): void
     {
-        $this->setAttr($name, $value);
+        $this->setAttr($property, $value);
     }
 
     /**
@@ -528,7 +528,7 @@ abstract class Model extends MvcModel
      * @param string $name 名称
      * @return mixed
      */
-    public function __get(string $name)
+    public function __get($name)
     {
         return $this->getAttr($name);
     }
@@ -538,7 +538,7 @@ abstract class Model extends MvcModel
      * @param string $name 名称
      * @return bool
      */
-    public function __isset(string $name): bool
+    public function __isset($name): bool
     {
         return !is_null($this->getAttr($name));
     }
@@ -575,7 +575,7 @@ abstract class Model extends MvcModel
 
     # 以下为重写phalcon基方法
 
-    public function readAttribute(string $attribute)
+    public function readAttribute($attribute)
     {
         if (!isset($this->$attribute)) {
             return null;

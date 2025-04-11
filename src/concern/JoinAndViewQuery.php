@@ -106,7 +106,7 @@ trait JoinAndViewQuery
             }
         }
 
-        if ($this->prefix && strpos($table, '.') === false && !Str::startsWith($table, $this->prefix)) {
+        if ($this->prefix && (strpos($table, '.') === false) && !Str::startsWith($table, $this->prefix)) {
             $table = $this->getTable($table);
         }
 

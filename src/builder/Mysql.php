@@ -346,18 +346,18 @@ class Mysql extends Builder
         $key = trim($key);
 
         // JSON字段支持
-        if (false !== strpos($key, '->>') && false === strpos($key, '(')) {
+        if ((false !== strpos($key, '->>')) && (false === strpos($key, '('))) {
             [$field, $name] = explode('->>', $key, 2);
             return $this->parseKey($query, $field, true) . '->>\'$' . (Str::startsWith($name, '[') ? '' : '.') . str_replace('->>', '.', $name) . '\'';
         }
 
-        if (false !== strpos($key, '->') && false === strpos($key, '(')) {
+        if ((false !== strpos($key, '->')) && (false === strpos($key, '('))) {
             [$field, $name] = explode('->', $key, 2);
             return 'json_extract(' . $this->parseKey($query, $field, true) . ', \'$' . (Str::startsWith($name, '[') ? '' : '.') . str_replace('->', '.', $name) . '\')';
         }
 
         // 检查是否包含点号且不包含特殊字符
-        if (strpos($key, '.') !== false && !preg_match('/[,\'"\s]/', $key)) {
+        if ((strpos($key, '.') !== false) && !preg_match('/[,\'"\s]/', $key)) {
             [$table, $key] = explode('.', $key, 2);
 
             $alias = $query->getOptions('alias');

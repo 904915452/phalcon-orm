@@ -637,7 +637,7 @@ trait Attribute
             case 'serialize':
                 return $call($value);
             default:
-                return strpos($type, '\\') !== false ? new $type($value) : $value;
+                return (strpos($type, '\\') !== false) ? new $type($value) : $value;
         }
     }
 

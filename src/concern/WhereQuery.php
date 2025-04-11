@@ -56,7 +56,7 @@ trait WhereQuery
             foreach ($this->options['where'] as $logic => &$where) {
                 foreach ($where as $key => &$val) {
                     // 检查 $val 是否为数组且 $val[0] 是否为字符串
-                    if (is_array($val) && isset($val[0]) && is_string($val[0]) && strpos($val[0], '.') === false) {
+                    if (is_array($val) && isset($val[0]) && is_string($val[0]) && (strpos($val[0], '.') === false)) {
                         $val[0] = $via . '.' . $val[0];
                     }
                 }
@@ -407,7 +407,7 @@ trait WhereQuery
         $logic = strtoupper($logic);
 
         // 处理 via
-        if (is_string($field) && !empty($this->options['via']) && strpos($field, '.') === false) {
+        if (is_string($field) && !empty($this->options['via']) && (strpos($field, '.') === false)) {
             $field = $this->options['via'] . '.' . $field;
         }
 

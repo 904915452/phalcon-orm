@@ -61,7 +61,7 @@ class Builder extends BaseBuilder
                 $item = $this->parseKey($query, $key);
 
                 $result[$item . '->' . $name] = 'json_set(' . $item . ', \'$.' . $name . '\', ' . $this->parseDataBind($query, $key . '->' . $name, $val, $bind) . ')';
-            } elseif (strpos($key, '.') === false && !in_array($key, $fields, true)) {
+            } elseif ((strpos($key, '.') === false) && !in_array($key, $fields, true)) {
                 if ($options['strict']) {
                     throw new Exception('fields not exists:[' . $key . ']');
                 }
@@ -257,7 +257,7 @@ class Builder extends BaseBuilder
 //            $value = $value->__toString();
 //        }
 
-        if (is_scalar($value) && !in_array($exp, ['EXP', 'NOT NULL', 'NULL', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN']) && strpos($exp, 'TIME') === false) {
+        if (is_scalar($value) && !in_array($exp, ['EXP', 'NOT NULL', 'NULL', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN']) && (strpos($exp, 'TIME') === false)) {
             if (is_string($value) && Str::startsWith($value, ':') && $query->isBind(substr($value, 1))) {
             } else {
                 $name = $query->bindValue($value, $bindType);
@@ -469,7 +469,7 @@ class Builder extends BaseBuilder
      */
     protected function parseLimit(Query $query, string $limit): string
     {
-        return (!empty($limit) && strpos($limit, '(')) === false ? ' LIMIT ' . $limit . ' ' : '';
+        return (!empty($limit) && (strpos($limit, '(')) === false )? ' LIMIT ' . $limit . ' ' : '';
     }
 
     /**
@@ -523,7 +523,7 @@ class Builder extends BaseBuilder
                 $array[] = $this->parseRand($query);
             } elseif (is_string($val)) {
                 if (is_numeric($key)) {
-                    [$key, $sort] = explode(' ', strpos($val, ' ') !== false ? $val : $val . ' ');
+                    [$key, $sort] = explode(' ', (strpos($val, ' ') !== false) ? $val : $val . ' ');
                 } else {
                     $sort = $val;
                 }

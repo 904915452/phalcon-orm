@@ -379,9 +379,9 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
                 case '<=':
                     return $result <= $value;
                 case 'like':
-                    return is_string($result) && false !== strpos($result, $value);
+                    return is_string($result) && (false !== strpos($result, $value));
                 case 'not like':
-                    return is_string($result) && false === strpos($result, $value);
+                    return is_string($result) && (false === strpos($result, $value));
                 case 'in':
                     return is_scalar($result) && in_array($result, $value, true);
                 case 'not in':

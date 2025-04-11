@@ -238,7 +238,7 @@ trait PDOConnectionTrait
             $tableName = key($tableName) ?: current($tableName);
         }
 
-        if (false !== strpos($tableName, ',') || false !== strpos($tableName, ')')) {
+        if ((false !== strpos($tableName, ',')) || (false !== strpos($tableName, ')'))) {
             // 多表不获取字段信息
             return [];
         }
@@ -257,7 +257,7 @@ trait PDOConnectionTrait
     public function getSchemaInfo(string $tableName): array
     {
         // $schema = str_contains($tableName, '.') ? $tableName : $this->getConfig('database') . '.' . $tableName;// 8.0+
-        $schema = strpos($tableName, '.') !== false ? $tableName : $this->getConfig('dbname') . '.' . $tableName;
+        $schema = (strpos($tableName, '.') !== false) ? $tableName : $this->getConfig('dbname') . '.' . $tableName;
 
         // 字段缓存 暂时去掉
         // $cacheKey = $this->getSchemaCacheKey($schema);
@@ -508,7 +508,7 @@ trait PDOConnectionTrait
         $pdo = $this->getPDOStatement($sql, $query->getBind(), $options['master']);
         $resultSet = $pdo->fetchAll(PDO::FETCH_ASSOC);
 
-        if (is_string($key) && !empty($key) && false !== strpos($key, '.')) {
+        if (is_string($key) && !empty($key) && (false !== strpos($key, '.'))) {
             [$alias, $key] = explode('.', $key);
         }
 

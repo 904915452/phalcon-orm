@@ -1,5 +1,5 @@
 <?php
-declare (strict_types = 1);
+declare (strict_types=1);
 
 namespace Dm\PhalconOrm\concern;
 
@@ -14,13 +14,13 @@ trait AggregateQuery
     /**
      * 聚合查询.
      *
-     * @param string     $aggregate 聚合方法
-     * @param string|Raw $field     字段名
-     * @param bool       $force     强制转为数字类型
+     * @param string $aggregate 聚合方法
+     * @param string|Raw $field 字段名
+     * @param bool $force 强制转为数字类型
      *
      * @return mixed
      */
-    protected function aggregate(string $aggregate, string | Raw $field, bool $force = false)
+    protected function aggregate(string $aggregate, $field, bool $force = false)
     {
         return $this->connection->aggregate($this, $aggregate, $field, $force);
     }
@@ -37,7 +37,7 @@ trait AggregateQuery
             return $this->countWithGroup($field);
         }
 
-        return (int) $this->aggregate('COUNT', $field);
+        return (int)$this->aggregate('COUNT', $field);
     }
 
     protected function countWithGroup(string $field): int
@@ -47,7 +47,7 @@ trait AggregateQuery
         }
 
         $options = $this->getOptions();
-        $cache   = $options['cache'] ?? null;
+        $cache = $options['cache'] ?? null;
 
         if (isset($options['cache'])) {
             unset($options['cache']);
@@ -65,7 +65,7 @@ trait AggregateQuery
 
         $query->table([$subSql => '_group_count_']);
 
-        return (int) $query->aggregate('COUNT', '*');
+        return (int)$query->aggregate('COUNT', '*');
     }
 
     /**
@@ -73,7 +73,7 @@ trait AggregateQuery
      * @param string|Raw $field 字段名
      * @return float
      */
-    public function sum(string | Raw $field): float
+    public function sum($field): float
     {
         return $this->aggregate('SUM', $field, true);
     }
@@ -81,10 +81,10 @@ trait AggregateQuery
     /**
      * MIN查询.
      * @param string|Raw $field 字段名
-     * @param bool       $force 强制转为数字类型
+     * @param bool $force 强制转为数字类型
      * @return mixed
      */
-    public function min(string | Raw $field, bool $force = true)
+    public function min($field, bool $force = true)
     {
         return $this->aggregate('MIN', $field, $force);
     }
@@ -92,10 +92,10 @@ trait AggregateQuery
     /**
      * MAX查询.
      * @param string|Raw $field 字段名
-     * @param bool       $force 强制转为数字类型
+     * @param bool $force 强制转为数字类型
      * @return mixed
      */
-    public function max(string | Raw $field, bool $force = true)
+    public function max($field, bool $force = true)
     {
         return $this->aggregate('MAX', $field, $force);
     }
@@ -105,7 +105,7 @@ trait AggregateQuery
      * @param string|Raw $field 字段名
      * @return float
      */
-    public function avg(string | Raw $field): float
+    public function avg($field): float
     {
         return $this->aggregate('AVG', $field, true);
     }

@@ -1,8 +1,9 @@
 <?php
-declare (strict_types = 1);
+declare (strict_types=1);
 
 namespace Dm\PhalconOrm\concern;
 
+use Dm\PhalconOrm\helper\Str;
 use Dm\PhalconOrm\Query;
 use Dm\PhalconOrm\Raw;
 
@@ -13,13 +14,13 @@ trait JoinAndViewQuery
 {
     /**
      * 查询SQL组装 join.
-     * @param array|string|Raw   $join      关联的表名
-     * @param mixed  $condition 条件
-     * @param string $type      JOIN类型
-     * @param array  $bind      参数绑定
+     * @param array|string|Raw $join 关联的表名
+     * @param mixed $condition 条件
+     * @param string $type JOIN类型
+     * @param array $bind 参数绑定
      * @return $this
      */
-    public function join(array | string | Raw $join, string $condition = null, string $type = 'INNER', array $bind = [])
+    public function join($join, string $condition = null, string $type = 'INNER', array $bind = [])
     {
         $table = $this->getJoinTable($join);
 
@@ -34,36 +35,36 @@ trait JoinAndViewQuery
 
     /**
      * LEFT JOIN.
-     * @param array|string|Raw  $join      关联的表名
+     * @param array|string|Raw $join 关联的表名
      * @param mixed $condition 条件
-     * @param array $bind      参数绑定
+     * @param array $bind 参数绑定
      * @return $this
      */
-    public function leftJoin(array | string | Raw $join, string $condition = null, array $bind = [])
+    public function leftJoin($join, string $condition = null, array $bind = [])
     {
         return $this->join($join, $condition, 'LEFT', $bind);
     }
 
     /**
      * RIGHT JOIN.
-     * @param array|string|Raw  $join      关联的表名
+     * @param array|string|Raw $join 关联的表名
      * @param mixed $condition 条件
-     * @param array $bind      参数绑定
+     * @param array $bind 参数绑定
      * @return $this
      */
-    public function rightJoin(array | string | Raw $join, string $condition = null, array $bind = [])
+    public function rightJoin($join, string $condition = null, array $bind = [])
     {
         return $this->join($join, $condition, 'RIGHT', $bind);
     }
 
     /**
      * FULL JOIN.
-     * @param array|string|Raw  $join      关联的表名
+     * @param array|string|Raw $join 关联的表名
      * @param mixed $condition 条件
-     * @param array $bind      参数绑定
+     * @param array $bind 参数绑定
      * @return $this
      */
-    public function fullJoin(array | string | Raw $join, string $condition = null, array $bind = [])
+    public function fullJoin($join, string $condition = null, array $bind = [])
     {
         return $this->join($join, $condition, 'FULL');
     }
@@ -71,11 +72,11 @@ trait JoinAndViewQuery
     /**
      * 获取Join表名及别名 支持
      * ['prefix_table或者子查询'=>'alias'] 'table alias'.
-     * @param array|string|Raw $join  JION表名
-     * @param string           $alias 别名
+     * @param array|string|Raw $join JION表名
+     * @param string|null $alias 别名
      * @return string|array
      */
-    protected function getJoinTable(array | string | Raw $join, string &$alias = null)
+    protected function getJoinTable($join, string &$alias = null)
     {
         if (is_array($join)) {
             $table = $join;
@@ -90,24 +91,25 @@ trait JoinAndViewQuery
 
         $join = trim($join);
 
-        if (str_contains($join, '(')) {
+        if (strpos($join, '(') !== false) {
             // 使用子查询
             return $join;
         }
         // 使用别名
-        if (str_contains($join, ' ')) {
+        if (strpos($join, ' ') !== false) {
             // 使用别名
             [$table, $alias] = explode(' ', $join);
         } else {
             $table = $join;
-            if (!str_contains($join, '.')) {
+            if (strpos($join, '.') !== false) {
                 $alias = $join;
             }
         }
 
-        if ($this->prefix && !str_contains($table, '.') && !str_starts_with($table, $this->prefix)) {
+        if ($this->prefix && strpos($table, '.') === false && !Str::startsWith($table, $this->prefix)) {
             $table = $this->getTable($table);
         }
+
 
         if (!empty($alias) && $table != $alias) {
             $table = [$table => $alias];
@@ -125,12 +127,12 @@ trait JoinAndViewQuery
      * @param array $bind 参数绑定
      * @return JoinAndViewQuery|Query
      */
-    public function view(array | string | Raw $join, string | array | bool $field = true, string $on = null, string $type = 'INNER', array $bind = []): self
+    public function view($join, $field = true, string $on = null, string $type = 'INNER', array $bind = []): self
     {
         $this->options['view'] = true;
 
         $fields = [];
-        $table  = $this->getJoinTable($join, $alias);
+        $table = $this->getJoinTable($join, $alias);
 
         // 处理字段
         $fields = $this->processFields($field, $alias);
@@ -147,7 +149,7 @@ trait JoinAndViewQuery
         return $this;
     }
 
-    protected function processFields(string | array | bool $field, string $alias): array
+    protected function processFields($field, string $alias): array
     {
         $fields = [];
 
@@ -159,7 +161,7 @@ trait JoinAndViewQuery
             }
 
             foreach ($field as $key => $val) {
-                $name     = is_numeric($key) ? $alias . '.' . $val : (preg_match('/[,=\.\'\"\(\s]/', $key) ? $key : $alias . '.' . $key);
+                $name = is_numeric($key) ? $alias . '.' . $val : (preg_match('/[,=\.\'\"\(\s]/', $key) ? $key : $alias . '.' . $key);
                 $fields[] = $name . (is_numeric($key) ? '' : ' AS ' . $val);
 
                 $this->options['map'][$val] = $name;
@@ -199,7 +201,7 @@ trait JoinAndViewQuery
         // 视图查询排序处理
         foreach ($options['order'] as $key => $val) {
             if (is_numeric($key) && is_string($val)) {
-                if (str_contains($val, ' ')) {
+                if (strpos($val, ' ') !== false) {
                     [$field, $sort] = explode(' ', $val);
                     if (array_key_exists($field, $options['map'])) {
                         $options['order'][$options['map'][$field]] = $sort;

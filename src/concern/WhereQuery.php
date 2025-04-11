@@ -55,7 +55,8 @@ trait WhereQuery
         if ($via) {
             foreach ($this->options['where'] as $logic => &$where) {
                 foreach ($where as $key => &$val) {
-                    if (is_array($val) && !str_contains($val[0], '.')) {
+                    // 检查 $val 是否为数组且 $val[0] 是否为字符串
+                    if (is_array($val) && isset($val[0]) && is_string($val[0]) && strpos($val[0], '.') === false) {
                         $val[0] = $via . '.' . $val[0];
                     }
                 }
@@ -64,6 +65,7 @@ trait WhereQuery
 
         $this->bind($query->getBind(false));
     }
+
 
     /**
      * 指定OR查询条件.
@@ -405,9 +407,10 @@ trait WhereQuery
         $logic = strtoupper($logic);
 
         // 处理 via
-        if (is_string($field) && !empty($this->options['via']) && !str_contains($field, '.')) {
+        if (is_string($field) && !empty($this->options['via']) && strpos($field, '.') === false) {
             $field = $this->options['via'] . '.' . $field;
         }
+
 
         // 严格模式查询
         if ($strict) {
@@ -574,7 +577,7 @@ trait WhereQuery
      * @param Closure|array $otherwise 不满足条件后执行
      * @return $this
      */
-    public function when($condition, Closure|array $query, Closure|array $otherwise = null): self
+    public function when($condition, $query, $otherwise = null): self
     {
         // 处理条件为 Closure 的情况
         if ($condition instanceof Closure) {
@@ -591,7 +594,7 @@ trait WhereQuery
         return $this;
     }
 
-    protected function executeQuery(Closure|array $query): void
+    protected function executeQuery($query): void
     {
         if ($query instanceof Closure) {
             $query($this);

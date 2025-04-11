@@ -1,7 +1,9 @@
 <?php
+
 namespace Dm\PhalconOrm;
 
 use Closure;
+use Dm\PhalconOrm\helper\Str;
 use Exception;
 
 /**
@@ -50,24 +52,28 @@ class Builder extends BaseBuilder
             } elseif (is_null($val) && in_array($key, $fields, true)) {
                 $result[$item] = 'NULL';
                 continue;
-            } elseif (!is_scalar($val) && (in_array($key, (array) $query->getOptions('json')) || 'json' == $query->getFieldType($key))) {
+            } elseif (!is_scalar($val) && (in_array($key, (array)$query->getOptions('json')) || 'json' == $query->getFieldType($key))) {
                 $val = json_encode($val);
             }
 
-            if (str_contains($key, '->')) {
+            if (strpos($key, '->') !== false) {
                 [$key, $name] = explode('->', $key, 2);
-                $item         = $this->parseKey($query, $key);
+                $item = $this->parseKey($query, $key);
 
                 $result[$item . '->' . $name] = 'json_set(' . $item . ', \'$.' . $name . '\', ' . $this->parseDataBind($query, $key . '->' . $name, $val, $bind) . ')';
-            } elseif (!str_contains($key, '.') && !in_array($key, $fields, true)) {
+            } elseif (strpos($key, '.') === false && !in_array($key, $fields, true)) {
                 if ($options['strict']) {
                     throw new Exception('fields not exists:[' . $key . ']');
                 }
             } elseif (is_array($val) && !empty($val) && is_string($val[0])) {
                 if (in_array(strtoupper($val[0]), ['INC', 'DEC'])) {
-                    $result[$item] = match (strtoupper($val[0])) {
-                        'INC' => $item . ' + ' . floatval($val[1]),
-                        'DEC' => $item . ' - ' . floatval($val[1]),
+                    switch (strtoupper($val[0])) {
+                        case 'INC' :
+                            $result[$item] = $item . ' + ' . floatval($val[1]);
+                            break;
+                        case 'DEC' :
+                            $result[$item] = $item . ' - ' . floatval($val[1]);
+                            break;
                     };
                 }
             } elseif (is_scalar($val)) {
@@ -85,10 +91,10 @@ class Builder extends BaseBuilder
     /**
      * 数据绑定处理.
      *
-     * @param Query  $query 查询对象
-     * @param string $key   字段名
-     * @param mixed  $data  数据
-     * @param array  $bind  绑定数据
+     * @param Query $query 查询对象
+     * @param string $key 字段名
+     * @param mixed $data 数据
+     * @param array $bind 绑定数据
      *
      * @return string
      */
@@ -106,13 +112,13 @@ class Builder extends BaseBuilder
     /**
      * 字段名分析.
      *
-     * @param Query $query  查询对象
-     * @param mixed $key    字段名
-     * @param bool  $strict 严格检测
+     * @param Query $query 查询对象
+     * @param mixed $key 字段名
+     * @param bool $strict 严格检测
      *
      * @return string
      */
-    public function parseKey(Query $query, string | int | Raw $key, bool $strict = false): string
+    public function parseKey(Query $query, $key, bool $strict = false): string
     {
         return $key;
     }
@@ -120,7 +126,7 @@ class Builder extends BaseBuilder
     /**
      * 查询额外参数分析.
      *
-     * @param Query  $query 查询对象
+     * @param Query $query 查询对象
      * @param string $extra 额外参数
      *
      * @return string
@@ -133,7 +139,7 @@ class Builder extends BaseBuilder
     /**
      * field分析.
      *
-     * @param Query $query  查询对象
+     * @param Query $query 查询对象
      * @param array $fields 字段名
      *
      * @return string
@@ -162,17 +168,17 @@ class Builder extends BaseBuilder
     /**
      * table分析.
      *
-     * @param Query $query  查询对象
+     * @param Query $query 查询对象
      * @param array|string $tables 表名
      *
      * @return string
      */
-    protected function parseTable(Query $query, array | string $tables): string
+    protected function parseTable(Query $query, $tables): string
     {
-        $item    = [];
+        $item = [];
         $options = $query->getOptions();
 
-        foreach ((array) $tables as $key => $table) {
+        foreach ((array)$tables as $key => $table) {
             if ($table instanceof Raw) {
                 $item[] = $this->parseRaw($query, $table);
             } elseif (!is_numeric($key)) {
@@ -195,14 +201,14 @@ class Builder extends BaseBuilder
      */
     protected function parseWhere(Query $query, array $where): string
     {
-        $options  = $query->getOptions();
+        $options = $query->getOptions();
         $whereStr = $this->buildWhere($query, $where);
 
         if (!empty($options['soft_delete'])) {
             // 附加软删除条件
             [$field, $condition] = $options['soft_delete'];
 
-            $binds    = $query->getFieldsBindType();
+            $binds = $query->getFieldsBindType();
             $whereStr = $whereStr ? '( ' . $whereStr . ' ) AND ' : '';
             $whereStr = $whereStr . $this->parseWhereItem($query, $field, $condition, $binds);
         }
@@ -251,10 +257,10 @@ class Builder extends BaseBuilder
 //            $value = $value->__toString();
 //        }
 
-        if (is_scalar($value) && !in_array($exp, ['EXP', 'NOT NULL', 'NULL', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN']) && !str_contains($exp, 'TIME')) {
-            if (is_string($value) && str_starts_with($value, ':') && $query->isBind(substr($value, 1))) {
+        if (is_scalar($value) && !in_array($exp, ['EXP', 'NOT NULL', 'NULL', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN']) && strpos($exp, 'TIME') === false) {
+            if (is_string($value) && Str::startsWith($value, ':') && $query->isBind(substr($value, 1))) {
             } else {
-                $name  = $query->bindValue($value, $bindType);
+                $name = $query->bindValue($value, $bindType);
                 $value = ':' . $name;
             }
         }
@@ -272,12 +278,12 @@ class Builder extends BaseBuilder
     /**
      * 模糊查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param array  $value
+     * @param array $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      * @param string $logic
      *
      * @return string
@@ -288,7 +294,7 @@ class Builder extends BaseBuilder
         if (is_array($value)) {
             $array = [];
             foreach ($value as $item) {
-                $name    = $query->bindValue($item, Connection::PARAM_STR);
+                $name = $query->bindValue($item, Connection::PARAM_STR);
                 $array[] = $key . ' ' . $exp . ' :' . $name;
             }
 
@@ -303,12 +309,12 @@ class Builder extends BaseBuilder
     /**
      * 表达式查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param Raw    $value
+     * @param Raw $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -321,12 +327,12 @@ class Builder extends BaseBuilder
     /**
      * Null查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param mixed  $value
+     * @param mixed $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -339,16 +345,16 @@ class Builder extends BaseBuilder
     /**
      * 范围查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param mixed  $value
+     * @param mixed $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
-    protected function parseBetween(Query $query, string $key, string $exp, array | string $value, $field, int $bindType): string
+    protected function parseBetween(Query $query, string $key, string $exp, $value, $field, int $bindType): string
     {
         // BETWEEN 查询
         $data = is_array($value) ? $value : explode(',', $value);
@@ -362,12 +368,12 @@ class Builder extends BaseBuilder
     /**
      * IN查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param mixed  $value
+     * @param mixed $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -379,7 +385,7 @@ class Builder extends BaseBuilder
         } elseif ($value instanceof Raw) {
             $value = $this->parseRaw($query, $value);
         } else {
-            $value = array_unique(is_array($value) ? $value : explode(',', (string) $value));
+            $value = array_unique(is_array($value) ? $value : explode(',', (string)$value));
             if (count($value) === 0) {
                 return 'IN' == $exp ? '0 = 1' : '1 = 1';
             }
@@ -387,7 +393,7 @@ class Builder extends BaseBuilder
             if ($query->isAutoBind()) {
                 $array = [];
                 foreach ($value as $v) {
-                    $name    = $query->bindValue($v, $bindType);
+                    $name = $query->bindValue($v, $bindType);
                     $array[] = ':' . $name;
                 }
                 $value = implode(',', $array);
@@ -397,7 +403,7 @@ class Builder extends BaseBuilder
                 $value = implode(',', $value);
             }
 
-            if (!str_contains($value, ',')) {
+            if (strpos($value, ',') === false) {
                 return $key . ('IN' == $exp ? ' = ' : ' <> ') . $value;
             }
         }
@@ -408,10 +414,10 @@ class Builder extends BaseBuilder
     /**
      * 日期时间条件解析.
      *
-     * @param Query  $query    查询对象
-     * @param mixed  $value
+     * @param Query $query 查询对象
+     * @param mixed $value
      * @param string $key
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -420,7 +426,7 @@ class Builder extends BaseBuilder
         $options = $query->getOptions();
 
         // 获取时间字段类型
-        if (str_contains($key, '.')) {
+        if (strpos($key, '.') !== false) {
             [$table, $key] = explode('.', $key);
 
             if (isset($options['alias']) && $pos = array_search($table, $options['alias'])) {
@@ -463,7 +469,7 @@ class Builder extends BaseBuilder
      */
     protected function parseLimit(Query $query, string $limit): string
     {
-        return (!empty($limit) && !str_contains($limit, '(')) ? ' LIMIT ' . $limit . ' ' : '';
+        return (!empty($limit) && strpos($limit, '(')) === false ? ' LIMIT ' . $limit . ' ' : '';
     }
 
     /**
@@ -481,7 +487,7 @@ class Builder extends BaseBuilder
         foreach ($join as $item) {
             [$table, $type, $on] = $item;
 
-            if (str_contains($on, '=')) {
+            if (strpos($on, '=') !== false) {
                 [$val1, $val2] = explode('=', $on, 2);
 
                 $condition = $this->parseKey($query, $val1) . '=' . $this->parseKey($query, $val2);
@@ -517,14 +523,14 @@ class Builder extends BaseBuilder
                 $array[] = $this->parseRand($query);
             } elseif (is_string($val)) {
                 if (is_numeric($key)) {
-                    [$key, $sort] = explode(' ', str_contains($val, ' ') ? $val : $val . ' ');
+                    [$key, $sort] = explode(' ', strpos($val, ' ') !== false ? $val : $val . ' ');
                 } else {
                     $sort = $val;
                 }
 
                 if (preg_match('/^[\w\.]+$/', $key)) {
-                    $sort    = strtoupper($sort);
-                    $sort    = in_array($sort, ['ASC', 'DESC'], true) ? ' ' . $sort : '';
+                    $sort = strtoupper($sort);
+                    $sort = in_array($sort, ['ASC', 'DESC'], true) ? ' ' . $sort : '';
                     $array[] = $this->parseKey($query, $key, true) . $sort;
                 } else {
                     throw new Exception('order express error:' . $key);
@@ -539,13 +545,13 @@ class Builder extends BaseBuilder
      * 分析Raw对象
      *
      * @param Query $query 查询对象
-     * @param Raw   $raw   Raw对象
+     * @param Raw $raw Raw对象
      *
      * @return string
      */
     protected function parseRaw(Query $query, Raw $raw): string
     {
-        $sql  = $raw->getValue();
+        $sql = $raw->getValue();
         $bind = $raw->getBind();
 
         if ($bind) {
@@ -570,9 +576,9 @@ class Builder extends BaseBuilder
     /**
      * orderField分析.
      *
-     * @param Query  $query 查询对象
+     * @param Query $query 查询对象
      * @param string $key
-     * @param array  $val
+     * @param array $val
      *
      * @return string
      */
@@ -604,7 +610,7 @@ class Builder extends BaseBuilder
      *
      * @return string
      */
-    protected function parseGroup(Query $query, string | array $group): string
+    protected function parseGroup(Query $query, $group): string
     {
         if (empty($group)) {
             return '';
@@ -625,7 +631,7 @@ class Builder extends BaseBuilder
     /**
      * having分析.
      *
-     * @param Query  $query  查询对象
+     * @param Query $query 查询对象
      * @param string $having
      *
      * @return string
@@ -638,14 +644,14 @@ class Builder extends BaseBuilder
     /**
      * comment分析.
      *
-     * @param Query  $query   查询对象
+     * @param Query $query 查询对象
      * @param string $comment
      *
      * @return string
      */
     protected function parseComment(Query $query, string $comment): string
     {
-        if (str_contains($comment, '*/')) {
+        if (strpos($comment, '*/') !== false) {
             $comment = strstr($comment, '*/', true);
         }
 
@@ -655,7 +661,7 @@ class Builder extends BaseBuilder
     /**
      * distinct分析.
      *
-     * @param Query $query    查询对象
+     * @param Query $query 查询对象
      * @param mixed $distinct
      *
      * @return string
@@ -673,7 +679,7 @@ class Builder extends BaseBuilder
      *
      * @return string
      */
-    protected function parseForce(Query $query, string | array $index): string
+    protected function parseForce(Query $query, $index): string
     {
         if (empty($index)) {
             return '';
@@ -689,12 +695,12 @@ class Builder extends BaseBuilder
     /**
      * 设置锁机制.
      *
-     * @param Query       $query 查询对象
+     * @param Query $query 查询对象
      * @param bool|string $lock
      *
      * @return string
      */
-    protected function parseLock(Query $query, bool | string $lock = false): string
+    protected function parseLock(Query $query, $lock = false): string
     {
         if (is_bool($lock)) {
             return $lock ? ' FOR UPDATE ' : '';
@@ -709,9 +715,9 @@ class Builder extends BaseBuilder
     /**
      * 生成insertall SQL.
      *
-     * @param Query $query   查询对象
-     * @param  array $keys  字段名
-     * @param  array $datas 数据
+     * @param Query $query 查询对象
+     * @param array $keys 字段名
+     * @param array $datas 数据
      *
      * @return string
      */
@@ -720,7 +726,7 @@ class Builder extends BaseBuilder
         $options = $query->getOptions();
 
         // 获取绑定信息
-        $bind   = $query->getFieldsBindType();
+        $bind = $query->getFieldsBindType();
         $fields = [];
         $values = [];
 

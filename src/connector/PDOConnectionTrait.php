@@ -7,6 +7,7 @@ use Dm\PhalconOrm\BaseQuery;
 use Dm\PhalconOrm\exception\BindParamException;
 use Dm\PhalconOrm\exception\DbException;
 use Dm\PhalconOrm\exception\PDOException;
+use Dm\PhalconOrm\helper\Str;
 use PDO;
 use PDOStatement;
 use Throwable;
@@ -23,23 +24,23 @@ trait PDOConnectionTrait
      * 影响行数
      * @var int
      */
-    protected int $numRows;
+    protected $numRows;
 
-    protected int $transTimes = 0;
-    protected int $reConnectTimes = 0;
+    protected $transTimes = 0;
+    protected $reConnectTimes = 0;
 
     /**
      * 字段属性大小写.
      * @var int
      */
-    protected int $attrCase = PDO::CASE_LOWER;
+    protected $attrCase = PDO::CASE_LOWER;
 
     /**
      * 参数绑定类型映射.
      *
      * @var array
      */
-    protected array $bindType = [
+    protected $bindType = [
         'string' => self::PARAM_STR,
         'str' => self::PARAM_STR,
         'integer' => self::PARAM_INT,
@@ -231,13 +232,13 @@ trait PDOConnectionTrait
      * @param string $fetch 获取信息类型 包括 fields type bind pk
      * @return mixed
      */
-    public function getTableInfo(array|string $tableName, string $fetch = '')
+    public function getTableInfo($tableName, string $fetch = '')
     {
         if (is_array($tableName)) {
             $tableName = key($tableName) ?: current($tableName);
         }
 
-        if (str_contains($tableName, ',') || str_contains($tableName, ')')) {
+        if (false !== strpos($tableName, ',') || false !== strpos($tableName, ')')) {
             // 多表不获取字段信息
             return [];
         }
@@ -267,7 +268,9 @@ trait PDOConnectionTrait
         $autoinc = $info['_autoinc'] ?? null;
         unset($info['_pk'], $info['_autoinc']);
 
-        $bind = array_map(fn($val) => $this->getFieldBindType($val), $info);
+        $bind = array_map(function ($val) {
+            return $this->getFieldBindType($val);
+        }, $info);
 
         $this->info[$schema] = [
             'fields' => array_keys($info),
@@ -298,17 +301,20 @@ trait PDOConnectionTrait
      */
     public function getFieldBindType(string $type): int
     {
-        /**
-         * 8.0+
-         */
-        return match (true) {
-            in_array($type, ['integer', 'string', 'float', 'boolean', 'bool', 'int', 'str']) => $this->bindType[$type],
-            str_starts_with($type, 'set'), str_starts_with($type, 'enum') => self::PARAM_STR,
-            preg_match('/(double|float|decimal|real|numeric)/i', $type) => self::PARAM_FLOAT,
-            preg_match('/(int|serial|bit)/i', $type) => self::PARAM_INT,
-            preg_match('/bool/i', $type) => self::PARAM_BOOL,
-            default => self::PARAM_STR,
-        };
+        switch (true) {
+            case in_array($type, ['integer', 'string', 'float', 'boolean', 'bool', 'int', 'str']):
+                return $this->bindType[$type];
+            case Str::startsWith($type, 'set') || Str::startsWith($type, 'enum'):
+                return self::PARAM_STR;
+            case preg_match('/(double|float|decimal|real|numeric)/i', $type):
+                return self::PARAM_FLOAT;
+            case preg_match('/(int|serial|bit)/i', $type):
+                return self::PARAM_INT;
+            case preg_match('/bool/i', $type):
+                return self::PARAM_BOOL;
+            default:
+                return self::PARAM_STR;
+        }
     }
 
     /**
@@ -386,12 +392,15 @@ trait PDOConnectionTrait
     public function fieldCase(array $info): array
     {
         // 字段大小写转换
-        return match ($this->attrCase) {
-            PDO::CASE_LOWER => array_change_key_case($info),
-            PDO::CASE_UPPER => array_change_key_case($info, CASE_UPPER),
-            PDO::CASE_NATURAL => $info,
-            default => $info,
-        };
+        switch ($this->attrCase) {
+            case PDO::CASE_LOWER:
+                return array_change_key_case($info);
+            case PDO::CASE_UPPER:
+                return array_change_key_case($info, CASE_UPPER);
+            case PDO::CASE_NATURAL:
+            default:
+                return $info;
+        }
     }
 
     /**
@@ -458,7 +467,7 @@ trait PDOConnectionTrait
      * @throws DbException
      * @throws Throwable
      */
-    public function column(BaseQuery $query, string|array $column, string $key = ''): array
+    public function column(BaseQuery $query, $column, string $key = ''): array
     {
         $options = $query->parseOptions();
 
@@ -499,7 +508,7 @@ trait PDOConnectionTrait
         $pdo = $this->getPDOStatement($sql, $query->getBind(), $options['master']);
         $resultSet = $pdo->fetchAll(PDO::FETCH_ASSOC);
 
-        if (is_string($key) && str_contains($key, '.')) {
+        if (is_string($key) && !empty($key) && false !== strpos($key, '.')) {
             [$alias, $key] = explode('.', $key);
         }
 
@@ -507,15 +516,15 @@ trait PDOConnectionTrait
             $result = [];
         } elseif ('*' !== $column && count($column) === 1) {
             $column = array_shift($column);
-            if (str_contains($column, ' ')) {
+            if (false !== strpos($column, ' ')) {
                 $column = substr(strrchr(trim($column), ' '), 1);
             }
 
-            if (str_contains($column, '.')) {
+            if (false !== strpos($column, '.')) {
                 [$alias, $column] = explode('.', $column);
             }
 
-            if (str_contains($column, '->')) {
+            if (false !== strpos($column, '->')) {
                 $column = $this->builder->parseKey($query, $column);
             }
 
@@ -605,7 +614,7 @@ trait PDOConnectionTrait
     public function getLastInsID(BaseQuery $query, string $sequence = null)
     {
         try {
-            $insertId = $this->pdo->lastInsertId($sequence);
+            $insertId = $this->_pdo->lastInsertId($sequence);
         } catch (\Exception $e) {
             $insertId = '';
         }
@@ -817,7 +826,7 @@ trait PDOConnectionTrait
      * @throws DbException
      * @throws Throwable
      */
-    public function aggregate(BaseQuery $query, string $aggregate, string|Raw $field, bool $force = false)
+    public function aggregate(BaseQuery $query, string $aggregate, $field, bool $force = false)
     {
         if (is_string($field) && 0 === stripos($field, 'DISTINCT ')) {
             [$distinct, $field] = explode(' ', $field);

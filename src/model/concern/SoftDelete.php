@@ -177,7 +177,7 @@ trait SoftDelete
      * @param bool $read 是否查询操作 写操作的时候会自动去掉表别名
      * @return string|false
      */
-    public function getDeleteTimeField(bool $read = false): bool|string
+    public function getDeleteTimeField(bool $read = false)
     {
         $field = property_exists($this, 'deleteTime') && isset($this->deleteTime) ? $this->deleteTime : 'delete_time';
 
@@ -185,11 +185,11 @@ trait SoftDelete
             return false;
         }
 
-        if (!str_contains($field, '.')) {
+        if (false === strpos($field, '.')) {
             $field = '__TABLE__.' . $field;
         }
 
-        if (!$read && str_contains($field, '.')) {
+        if (!$read && false !== strpos($field, '.')) {
             $array = explode('.', $field);
             $field = array_pop($array);
         }

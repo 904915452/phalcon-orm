@@ -2,6 +2,7 @@
 namespace Dm\PhalconOrm\builder;
 
 use Dm\PhalconOrm\Builder;
+use Dm\PhalconOrm\helper\Str;
 use Dm\PhalconOrm\Query;
 use Dm\PhalconOrm\Raw;
 use Exception;
@@ -202,7 +203,7 @@ class Mysql extends Builder
 
         $set = [];
         foreach ($data as $key => $val) {
-            $set[] = (str_contains($key, '->') ? strstr($key, '->', true) : $key) . ' = ' . $val;
+            $set[] = ((false !== strpos($key, '->')) ? strstr($key, '->', true) : $key) . ' = ' . $val;
         }
 
         return str_replace(
@@ -326,14 +327,13 @@ class Mysql extends Builder
 
     /**
      * 字段和表名处理.
-     *
-     * @param Query $query  查询对象
-     * @param mixed $key    字段名
-     * @param bool  $strict 严格检测
-     *
+     * @param Query $query 查询对象
+     * @param mixed $key 字段名
+     * @param bool $strict 严格检测
      * @return string
+     * @throws Exception
      */
-    public function parseKey(Query $query, string | int | Raw $key, bool $strict = false): string
+    public function parseKey(Query $query, $key, bool $strict = false): string
     {
         if (is_int($key)) {
             return (string) $key;
@@ -345,25 +345,22 @@ class Mysql extends Builder
 
         $key = trim($key);
 
-        if (str_contains($key, '->>') && !str_contains($key, '(')) {
-            // JSON字段支持
+        // JSON字段支持
+        if (false !== strpos($key, '->>') && false === strpos($key, '(')) {
             [$field, $name] = explode('->>', $key, 2);
-
-            return $this->parseKey($query, $field, true) . '->>\'$' . (str_starts_with($name, '[') ? '' : '.') . str_replace('->>', '.', $name) . '\'';
+            return $this->parseKey($query, $field, true) . '->>\'$' . (Str::startsWith($name, '[') ? '' : '.') . str_replace('->>', '.', $name) . '\'';
         }
 
-        if (str_contains($key, '->') && !str_contains($key, '(')) {
-            // JSON字段支持
+        if (false !== strpos($key, '->') && false === strpos($key, '(')) {
             [$field, $name] = explode('->', $key, 2);
-
-            return 'json_extract(' . $this->parseKey($query, $field, true) . ', \'$' . (str_starts_with($name, '[') ? '' : '.') . str_replace('->', '.', $name) . '\')';
+            return 'json_extract(' . $this->parseKey($query, $field, true) . ', \'$' . (Str::startsWith($name, '[') ? '' : '.') . str_replace('->', '.', $name) . '\')';
         }
 
-        if (str_contains($key, '.') && !preg_match('/[,\'\"\(\)`\s]/', $key)) {
+        // 检查是否包含点号且不包含特殊字符
+        if (strpos($key, '.') !== false && !preg_match('/[,\'"\s]/', $key)) {
             [$table, $key] = explode('.', $key, 2);
 
             $alias = $query->getOptions('alias');
-
             if ('__TABLE__' == $table) {
                 $table = $query->getOptions('table');
                 $table = is_array($table) ? array_shift($table) : $table;
@@ -378,12 +375,12 @@ class Mysql extends Builder
             throw new Exception('not support data:' . $key);
         }
 
-        if ('*' != $key && !preg_match('/[,\'\"\*\(\)`.\s]/', $key)) {
+        if ('*' != $key && !preg_match('/[,\s]/', $key)) {
             $key = '`' . $key . '`';
         }
 
         if (isset($table)) {
-            if (str_contains($table, '.')) {
+            if (false !== strpos($table, '.')) {
                 $table = str_replace('.', '`.`', $table);
             }
 
@@ -407,7 +404,7 @@ class Mysql extends Builder
      */
     protected function parseNull(Query $query, string $key, string $exp, $value, $field, int $bindType): string
     {
-        if (str_starts_with($key, "json_extract")) {
+        if (Str::startsWith($key, "json_extract")) {
             if ('NULL' === $exp) {
                 return '(' . $key . ' is null OR json_type(' . $key . ') = \'NULL\')';
             } elseif ('NOT NULL' === $exp) {

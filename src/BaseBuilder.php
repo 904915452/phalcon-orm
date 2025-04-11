@@ -5,16 +5,16 @@ namespace Dm\PhalconOrm;
 
 use Closure;
 use Exception;
-use Phalcon\Db\Adapter\Pdo\AbstractPdo;
+use Phalcon\Db\Adapter\Pdo as AbstractPdo;
 
 /**
  * Db Base Builder.
  */
 abstract class BaseBuilder
 {
-    const PARAM_INT   = 1;
-    const PARAM_STR   = 2;
-    const PARAM_BOOL  = 5;
+    const PARAM_INT = 1;
+    const PARAM_STR = 2;
+    const PARAM_BOOL = 5;
     const PARAM_FLOAT = 21;
 
     /**
@@ -36,16 +36,16 @@ abstract class BaseBuilder
      * @var array
      */
     protected $parser = [
-        'parseCompare'     => ['=', '<>', '>', '>=', '<', '<='],
-        'parseLike'        => ['LIKE', 'NOT LIKE'],
-        'parseBetween'     => ['NOT BETWEEN', 'BETWEEN'],
-        'parseIn'          => ['NOT IN', 'IN'],
-        'parseExp'         => ['EXP'],
-        'parseNull'        => ['NOT NULL', 'NULL'],
+        'parseCompare' => ['=', '<>', '>', '>=', '<', '<='],
+        'parseLike' => ['LIKE', 'NOT LIKE'],
+        'parseBetween' => ['NOT BETWEEN', 'BETWEEN'],
+        'parseIn' => ['NOT IN', 'IN'],
+        'parseExp' => ['EXP'],
+        'parseNull' => ['NOT NULL', 'NULL'],
         'parseBetweenTime' => ['BETWEEN TIME', 'NOT BETWEEN TIME'],
-        'parseTime'        => ['< TIME', '> TIME', '<= TIME', '>= TIME'],
-        'parseExists'      => ['NOT EXISTS', 'EXISTS'],
-        'parseColumn'      => ['COLUMN'],
+        'parseTime' => ['< TIME', '> TIME', '<= TIME', '>= TIME'],
+        'parseExists' => ['NOT EXISTS', 'EXISTS'],
+        'parseColumn' => ['COLUMN'],
     ];
 
     /**
@@ -104,8 +104,8 @@ abstract class BaseBuilder
     /**
      * 注册查询表达式解析.
      *
-     * @param string $name   解析方法
-     * @param array  $parser 匹配表达式数据
+     * @param string $name 解析方法
+     * @param array $parser 匹配表达式数据
      *
      * @return $this
      */
@@ -119,10 +119,10 @@ abstract class BaseBuilder
     /**
      * 数据分析.
      *
-     * @param Query $query  查询对象
-     * @param array $data   数据
+     * @param Query $query 查询对象
+     * @param array $data 数据
      * @param array $fields 字段信息
-     * @param array $bind   参数绑定
+     * @param array $bind 参数绑定
      *
      * @return array
      */
@@ -131,10 +131,10 @@ abstract class BaseBuilder
     /**
      * 数据绑定处理.
      *
-     * @param Query  $query 查询对象
-     * @param string $key   字段名
-     * @param mixed  $data  数据
-     * @param array  $bind  绑定数据
+     * @param Query $query 查询对象
+     * @param string $key 字段名
+     * @param mixed $data 数据
+     * @param array $bind 绑定数据
      *
      * @return string
      */
@@ -143,18 +143,18 @@ abstract class BaseBuilder
     /**
      * 字段名分析.
      *
-     * @param Query $query  查询对象
-     * @param mixed $key    字段名
-     * @param bool  $strict 严格检测
+     * @param Query $query 查询对象
+     * @param mixed $key 字段名
+     * @param bool $strict 严格检测
      *
      * @return string
      */
-    abstract public function parseKey(Query $query, string | int | Raw $key, bool $strict = false): string;
+    abstract public function parseKey(Query $query, $key, bool $strict = false): string;
 
     /**
      * 查询额外参数分析.
      *
-     * @param Query  $query 查询对象
+     * @param Query $query 查询对象
      * @param string $extra 额外参数
      *
      * @return string
@@ -164,7 +164,7 @@ abstract class BaseBuilder
     /**
      * field分析.
      *
-     * @param Query $query  查询对象
+     * @param Query $query 查询对象
      * @param array $fields 字段名
      *
      * @return string
@@ -174,12 +174,12 @@ abstract class BaseBuilder
     /**
      * table分析.
      *
-     * @param Query $query  查询对象
+     * @param Query $query 查询对象
      * @param array|string $tables 表名
      *
      * @return string
      */
-    abstract protected function parseTable(Query $query, array | string $tables): string;
+    abstract protected function parseTable(Query $query, $tables): string;
 
     /**
      * where分析.
@@ -261,13 +261,13 @@ abstract class BaseBuilder
                 $where[] = $this->parseMultiWhereField($query, $value, $field, $logic, $binds);
             } elseif ($field instanceof Raw) {
                 $where[] = ' ' . $logic . ' ' . $this->parseWhereItem($query, $field, $value, $binds);
-            } elseif (str_contains($field, '|')) {
+            } elseif (strpos($field, '|') !== false) {
                 $where[] = $this->parseFieldsOr($query, $value, $field, $logic, $binds);
-            } elseif (str_contains($field, '&')) {
+            } elseif (strpos($field, '&') !== false) {
                 $where[] = $this->parseFieldsAnd($query, $value, $field, $logic, $binds);
             } else {
                 // 对字段使用表达式查询
-                $field   = is_string($field) ? $field : '';
+                $field = is_string($field) ? $field : '';
                 $where[] = ' ' . $logic . ' ' . $this->parseWhereItem($query, $field, $value, $binds);
             }
         }
@@ -278,11 +278,11 @@ abstract class BaseBuilder
     /**
      * 不同字段使用相同查询条件（AND）.
      *
-     * @param Query  $query 查询对象
-     * @param mixed  $value 查询条件
+     * @param Query $query 查询对象
+     * @param mixed $value 查询条件
      * @param string $field 查询字段
      * @param string $logic Logic
-     * @param array  $binds 参数绑定
+     * @param array $binds 参数绑定
      *
      * @return string
      */
@@ -300,11 +300,11 @@ abstract class BaseBuilder
     /**
      * 不同字段使用相同查询条件（OR）.
      *
-     * @param Query  $query 查询对象
-     * @param array  $value 查询条件
+     * @param Query $query 查询对象
+     * @param array $value 查询条件
      * @param string $field 查询字段
      * @param string $logic Logic
-     * @param array  $binds 参数绑定
+     * @param array $binds 参数绑定
      *
      * @return string
      */
@@ -344,11 +344,11 @@ abstract class BaseBuilder
     /**
      * 复合条件查询.
      *
-     * @param Query  $query 查询对象
-     * @param mixed  $value 查询条件
-     * @param mixed  $field 查询字段
+     * @param Query $query 查询对象
+     * @param mixed $value 查询条件
+     * @param mixed $field 查询字段
      * @param string $logic Logic
-     * @param array  $binds 参数绑定
+     * @param array $binds 参数绑定
      *
      * @return string
      */
@@ -369,7 +369,7 @@ abstract class BaseBuilder
      *
      * @param Query $query 查询对象
      * @param mixed $field 查询字段
-     * @param array $val   查询条件
+     * @param array $val 查询条件
      * @param array $binds 参数绑定
      *
      * @return string
@@ -379,12 +379,12 @@ abstract class BaseBuilder
     /**
      * 模糊查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param array  $value
+     * @param array $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      * @param string $logic
      *
      * @return string
@@ -394,12 +394,12 @@ abstract class BaseBuilder
     /**
      * 表达式查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param Raw    $value
+     * @param Raw $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -435,12 +435,12 @@ abstract class BaseBuilder
     /**
      * Null查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param mixed  $value
+     * @param mixed $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -449,30 +449,30 @@ abstract class BaseBuilder
     /**
      * 范围查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param mixed  $value
+     * @param mixed $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
-    abstract protected function parseBetween(Query $query, string $key, string $exp, array | string $value, $field, int $bindType): string;
+    abstract protected function parseBetween(Query $query, string $key, string $exp, $value, $field, int $bindType): string;
 
     /**
      * Exists查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param Raw|Closure  $value
+     * @param Raw|Closure $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
-    protected function parseExists(Query $query, string $key, string $exp, Raw | Closure $value, string $field, int $bindType): string
+    protected function parseExists(Query $query, string $key, string $exp, $value, string $field, int $bindType): string
     {
         // EXISTS 查询
         if ($value instanceof Closure) {
@@ -487,12 +487,12 @@ abstract class BaseBuilder
     /**
      * 时间比较查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param mixed  $value
+     * @param mixed $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -535,12 +535,12 @@ abstract class BaseBuilder
     /**
      * 时间范围查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param mixed  $value
+     * @param mixed $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -559,12 +559,12 @@ abstract class BaseBuilder
     /**
      * IN查询.
      *
-     * @param Query  $query    查询对象
+     * @param Query $query 查询对象
      * @param string $key
      * @param string $exp
-     * @param mixed  $value
+     * @param mixed $value
      * @param string $field
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -589,10 +589,10 @@ abstract class BaseBuilder
     /**
      * 日期时间条件解析.
      *
-     * @param Query  $query    查询对象
-     * @param mixed  $value
+     * @param Query $query 查询对象
+     * @param mixed $value
      * @param string $key
-     * @param int    $bindType
+     * @param int $bindType
      *
      * @return string
      */
@@ -632,7 +632,7 @@ abstract class BaseBuilder
      * 分析Raw对象
      *
      * @param Query $query 查询对象
-     * @param Raw   $raw   Raw对象
+     * @param Raw $raw Raw对象
      *
      * @return string
      */
@@ -655,12 +655,12 @@ abstract class BaseBuilder
      *
      * @return string
      */
-    abstract protected function parseGroup(Query $query, string | array $group): string;
+    abstract protected function parseGroup(Query $query, $group): string;
 
     /**
      * having分析.
      *
-     * @param Query  $query  查询对象
+     * @param Query $query 查询对象
      * @param string $having
      *
      * @return string
@@ -670,14 +670,14 @@ abstract class BaseBuilder
     /**
      * comment分析.
      *
-     * @param Query  $query   查询对象
+     * @param Query $query 查询对象
      * @param string $comment
      *
      * @return string
      */
     protected function parseComment(Query $query, string $comment): string
     {
-        if (str_contains($comment, '*/')) {
+        if (strpos($comment, '*/') !== false) {
             $comment = strstr($comment, '*/', true);
         }
 
@@ -687,7 +687,7 @@ abstract class BaseBuilder
     /**
      * distinct分析.
      *
-     * @param Query $query    查询对象
+     * @param Query $query 查询对象
      * @param mixed $distinct
      *
      * @return string
@@ -730,17 +730,17 @@ abstract class BaseBuilder
      *
      * @return string
      */
-    abstract protected function parseForce(Query $query, string | array $index): string;
+    abstract protected function parseForce(Query $query, $index): string;
 
     /**
      * 设置锁机制.
      *
-     * @param Query       $query 查询对象
+     * @param Query $query 查询对象
      * @param bool|string $lock
      *
      * @return string
      */
-    abstract protected function parseLock(Query $query, bool | string $lock = false): string;
+    abstract protected function parseLock(Query $query, $lock = false): string;
 
     /**
      * 生成查询SQL.
@@ -814,7 +814,7 @@ abstract class BaseBuilder
     /**
      * 生成insertall SQL.
      *
-     * @param Query $query   查询对象
+     * @param Query $query 查询对象
      * @param array $dataSet 数据集
      *
      * @return string

@@ -25,18 +25,18 @@ class Mysql extends \Phalcon\Db\Adapter\Pdo\Mysql implements ConnectionInterface
      * sql生成器
      * @var MysqlBuilder
      */
-    protected MysqlBuilder $builder;
+    protected $builder;
 
     /**
      * @var string
      */
-    protected string $queryStr;
+    protected $queryStr;
 
     /**
      * 参数绑定
      * @var array
      */
-    protected array $bind;
+    protected $bind;
 
     /**
      * Constructor for Phalcon\Db\Adapter\Pdo
@@ -122,11 +122,8 @@ class Mysql extends \Phalcon\Db\Adapter\Pdo\Mysql implements ConnectionInterface
     {
         [$tableName] = explode(' ', $tableName);
 
-        /*
-         * 8.0+
-         */
-        if (!str_contains($tableName, '`')) {
-            if (str_contains($tableName, '.')) {
+        if (false === strpos($tableName, '`')) { // 替换 str_contains 为 strpos
+            if (false !== strpos($tableName, '.')) {
                 $tableName = str_replace('.', '`.`', $tableName);
             }
             $tableName = '`' . $tableName . '`';

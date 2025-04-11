@@ -70,39 +70,39 @@ abstract class Model extends MvcModel
      * 数据库管理类
      * @var DbManager
      */
-    protected static DbManager $db;
+    protected static $db;
 
     /**
      * 主键
      * @var string
      */
-    protected string $pk = 'id';
+    protected $pk = 'id';
 
     /**
      * 数据表后缀
      * @var string
      */
-    protected string $suffix;
+    protected $suffix;
 
     /**
      * 数据是否存在.
      * @var bool
      */
-    private bool $exists = false;
+    private $exists = false;
 
     /**
      * 是否强制更新所有数据.
      *
      * @var bool
      */
-    private bool $force = false;
+    private $force = false;
 
     /**
      * 是否Replace.
      *
      * @var bool
      */
-    private bool $replace = false;
+    private $replace = false;
 
     /**
      * 方法注入.
@@ -180,7 +180,7 @@ abstract class Model extends MvcModel
      * @param string|null $sequence 自增序列名
      * @return bool
      */
-    public function hold(array|object $data = [], string $sequence = null): bool
+    public function hold($data = [], string $sequence = null): bool
     {
         if ($data instanceof Model) {
             $data = $data->getData();

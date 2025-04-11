@@ -6,7 +6,6 @@ namespace Dm\PhalconOrm\model;
 use Closure;
 use Dm\PhalconOrm\BaseQuery as Query;
 use Dm\PhalconOrm\exception\DbException as Exception;
-use Dm\PhalconOrm\model\Model;
 
 /**
  * 模型关联基础类.
@@ -176,7 +175,7 @@ abstract class Relation
         }
 
         foreach ($fields as &$field) {
-            if (!str_contains($field, '.')) {
+            if (strpos($field, '.') === false) {
                 $field = $model . '.' . $field;
             }
         }
@@ -188,12 +187,16 @@ abstract class Relation
     {
         foreach ($where as $key => &$val) {
             if (is_string($key)) {
-                $where[] = [!str_contains($key, '.') ? $relation . '.' . $key : $key, '=', $val];
+                $where[] = [!$this->str_contains($key, '.') ? $relation . '.' . $key : $key, '=', $val];
                 unset($where[$key]);
-            } elseif (isset($val[0]) && !str_contains($val[0], '.')) {
+            } elseif (isset($val[0]) && !$this->str_contains($val[0], '.')) {
                 $val[0] = $relation . '.' . $val[0];
             }
         }
+    }
+
+    private function str_contains(string $haystack, string $needle): bool {
+        return '' === $needle || false !== strpos($haystack, $needle);
     }
 
     /**

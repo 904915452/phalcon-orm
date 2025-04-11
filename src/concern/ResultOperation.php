@@ -70,7 +70,7 @@ trait ResultOperation
         foreach ($withAttr as $name => $closure) {
             $name = Str::snake($name);
 
-            if (str_contains($name, '.')) {
+            if (strpos($name, '.') !== false) {
                 // 支持JSON字段 获取器定义
                 [$key, $field] = explode('.', $name);
 

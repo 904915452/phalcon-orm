@@ -12,7 +12,7 @@ use Dm\PhalconOrm\exception\DataNotFoundException;
 use Dm\PhalconOrm\exception\ModelNotFoundException;
 use Dm\PhalconOrm\helper\Collection;
 use Exception;
-use Phalcon\Db\Adapter\Pdo\AbstractPdo;
+use Phalcon\Db\Adapter\Pdo as AbstractPdo;
 
 /**
  * 数据查询基础类.
@@ -35,20 +35,20 @@ abstract class BaseQuery
     /**
      * @var string 数据表名称
      */
-    protected string $name;
+    protected $name;
 
     /**
      * 主键
      * @var string|array|bool
      */
-    protected string|array|bool $pk = 'id';
+    protected $pk = 'id';
 
     /**
      * 当前查询参数.
      * @var array
      */
-    protected array $options = [];
-    protected string $prefix = '';
+    protected $options = [];
+    protected $prefix = '';
 
     public function __construct($connector)
     {
@@ -76,7 +76,7 @@ abstract class BaseQuery
      * @param string|array|bool $pk 主键
      * @return $this
      */
-    public function pk(string|array|bool $pk)
+    public function pk($pk)
     {
         $this->pk = $pk;
         return $this;
@@ -105,9 +105,9 @@ abstract class BaseQuery
      * @param string|array|Raw $table 表名
      * @return $this
      */
-    public function table(string|array|Raw $table)
+    public function table($table)
     {
-        if (is_string($table) && !str_contains($table, ')')) {
+        if (is_string($table) && strpos($table, ')') === false) {
             $table = $this->tableStr($table);
         } elseif (is_array($table)) {
             $table = $this->tableArr($table);
@@ -122,11 +122,11 @@ abstract class BaseQuery
      * @param string $table 表名
      * @return array|string
      */
-    protected function tableStr(string $table): array|string
+    protected function tableStr(string $table)
     {
-        if (!str_contains($table, ',')) {
+        if (strpos($table, ',') === false) {
             // 单表
-            if (str_contains($table, ' ')) {
+            if (strpos($table, ' ') !== false) {
                 [$item, $alias] = explode(' ', $table);
                 $table = [];
                 $this->alias([$item => $alias]);
@@ -139,7 +139,7 @@ abstract class BaseQuery
 
             foreach ($tables as $item) {
                 $item = trim($item);
-                if (str_contains($item, ' ')) {
+                if (strpos($item, ' ') !== false) {
                     [$item, $alias] = explode(' ', $item);
                     $this->alias([$item => $alias]);
                     $table[$item] = $alias;
@@ -156,7 +156,7 @@ abstract class BaseQuery
      * @param array|string $alias 数据表别名
      * @return $this
      */
-    public function alias(array|string $alias)
+    public function alias($alias)
     {
         if (is_array($alias)) {
             $this->options['alias'] = $alias;
@@ -479,7 +479,7 @@ abstract class BaseQuery
      *
      * @return $this
      */
-    public function field(string|array|Raw|bool $field)
+    public function field($field)
     {
         if (empty($field)) {
             return $this;
@@ -518,7 +518,7 @@ abstract class BaseQuery
      * @param string $order 排序
      * @return $this
      */
-    public function order(string|array|Raw $field, string $order = '')
+    public function order($field, string $order = '')
     {
         if (empty($field)) {
             return $this;
@@ -532,7 +532,7 @@ abstract class BaseQuery
             if (!empty($this->options['via'])) {
                 $field = $this->options['via'] . '.' . $field;
             }
-            if (str_contains($field, ',')) {
+            if (strpos($field, ',') !== false) {
                 $field = array_map('trim', explode(',', $field));
             } else {
                 $field = empty($order) ? $field : [$field => $order];
@@ -590,7 +590,7 @@ abstract class BaseQuery
      * @param bool $all 是否适用UNION ALL
      * @return $this
      */
-    public function union(string|array|Closure $union, bool $all = false)
+    public function union($union, bool $all = false)
     {
         $this->options['union']['type'] = $all ? 'UNION ALL' : 'UNION';
         if (is_array($union)) {
@@ -606,7 +606,7 @@ abstract class BaseQuery
      * @param mixed $union UNION数据
      * @return $this
      */
-    public function unionAll(string|array|Closure $union)
+    public function unionAll($union)
     {
         return $this->union($union, true);
     }
@@ -616,7 +616,7 @@ abstract class BaseQuery
      * @param bool|string $lock 是否lock
      * @return $this
      */
-    public function lock(bool|string $lock = false)
+    public function lock($lock = false)
     {
         $this->options['lock'] = $lock;
         if ($lock) {
@@ -631,7 +631,7 @@ abstract class BaseQuery
      * @param string $key 索引
      * @return array
      */
-    public function column(string|array $field, string $key = ''): array
+    public function column($field, string $key = ''): array
     {
         $result = $this->connection->column($this, $field, $key);
 
@@ -839,7 +839,7 @@ abstract class BaseQuery
 
     /**
      * 指定分页.
-     * @param int      $page     页数
+     * @param int $page 页数
      * @param int|null $listRows 每页数量
      * @return $this
      */
@@ -852,14 +852,14 @@ abstract class BaseQuery
     /**
      * 分页查询.
      * @param int|array|null $listRows 每页数量 数组表示配置参数
-     * @param int|bool       $simple   是否简洁模式或者总记录数
+     * @param int|bool $simple 是否简洁模式或者总记录数
      * @return Paginator
      * @throws Exception
      */
-    public function paginate(int | array $listRows = null, int | bool $simple = false): Paginator
+    public function paginate($listRows = null, $simple = false): Paginator
     {
         if (is_int($simple)) {
-            $total  = $simple;
+            $total = $simple;
             $simple = false;
         }
 
@@ -871,15 +871,15 @@ abstract class BaseQuery
         ];
 
         if (is_array($listRows)) {
-            $config   = array_merge($defaultConfig, $listRows);
+            $config = array_merge($defaultConfig, $listRows);
             $listRows = intval($config['list_rows']);
         } else {
-            $config   = $defaultConfig;
+            $config = $defaultConfig;
             $listRows = intval($listRows ?: $config['list_rows']);
         }
 
-        $page           = isset($config['page']) ? (int) $config['page'] : Paginator::getCurrentPage($config['var_page']);
-        $page           = max($page, 1);
+        $page = isset($config['page']) ? (int)$config['page'] : Paginator::getCurrentPage($config['var_page']);
+        $page = max($page, 1);
         $config['path'] = $config['path'] ?? Paginator::getCurrentPath();
 
         if (!isset($total) && !$simple) {
@@ -887,7 +887,7 @@ abstract class BaseQuery
 
             unset($this->options['order'], $this->options['cache'], $this->options['limit'], $this->options['page'], $this->options['field']);
 
-            $bind  = $this->bind;
+            $bind = $this->bind;
             $total = $this->count();
             if ($total > 0) {
                 $results = $this->options($options)->bind($bind)->page($page, $listRows)->select();
@@ -900,7 +900,7 @@ abstract class BaseQuery
             }
         } elseif ($simple) {
             $results = $this->limit(($page - 1) * $listRows, $listRows + 1)->select();
-            $total   = null;
+            $total = null;
         } else {
             $results = $this->page($page, $listRows)->select();
         }

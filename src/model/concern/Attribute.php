@@ -1,11 +1,12 @@
 <?php
 
 namespace Dm\PhalconOrm\model\concern;
+
+use Closure;
 use Dm\PhalconOrm\model\Relation;
 use Dm\PhalconOrm\Raw;
 use Dm\PhalconOrm\helper\Str;
 use InvalidArgumentException;
-use Stringable;
 
 trait Attribute
 {
@@ -205,13 +206,13 @@ trait Attribute
     /**
      * 设置数据对象值
      *
-     * @param array|object $data  数据
-     * @param bool  $set   是否调用修改器
+     * @param array|object $data 数据
+     * @param bool $set 是否调用修改器
      * @param array $allow 允许的字段名
      *
      * @return $this
      */
-    public function data(array|object $data, bool $set = false, array $allow = [])
+    public function data($data, bool $set = false, array $allow = [])
     {
         if ($data instanceof Model) {
             $data = $data->getData();
@@ -248,7 +249,7 @@ trait Attribute
      * 批量追加数据对象值
      *
      * @param array $data 数据
-     * @param bool  $set  是否需要进行数据处理
+     * @param bool $set 是否需要进行数据处理
      *
      * @return $this
      */
@@ -296,8 +297,8 @@ trait Attribute
     /**
      * 获取当前对象数据 如果不存在指定字段返回false.
      * @param string $name 字段名 留空获取全部
-     * @throws InvalidArgumentException
      * @return mixed
+     * @throws InvalidArgumentException
      */
     public function getData(string $name = null)
     {
@@ -346,8 +347,8 @@ trait Attribute
     /**
      * 直接设置数据对象值
      *
-     * @param string $name  属性名
-     * @param mixed  $value 值
+     * @param string $name 属性名
+     * @param mixed $value 值
      *
      * @return void
      */
@@ -377,9 +378,9 @@ trait Attribute
     /**
      * 通过修改器 设置数据对象值
      *
-     * @param string $name  属性名
-     * @param mixed  $value 属性值
-     * @param array  $data  数据
+     * @param string $name 属性名
+     * @param mixed $value 属性值
+     * @param array $data 数据
      *
      * @return void
      */
@@ -406,7 +407,7 @@ trait Attribute
 //            $this->relation[$name]  = $value;
 //            $this->with[$name]      = true;
 //        }
-        elseif ((array_key_exists($name, $this->origin) || empty($this->origin)) && $value instanceof Stringable) {
+        elseif ((array_key_exists($name, $this->origin) || empty($this->origin)) && method_exists($value, '__toString')) {
             // 对象类型
             $value = $value->__toString();
         }
@@ -419,12 +420,12 @@ trait Attribute
     /**
      * 数据写入 类型转换.
      *
-     * @param mixed        $value 值
-     * @param string|array $type  要转换的类型
+     * @param mixed $value 值
+     * @param string|array $type 要转换的类型
      *
      * @return mixed
      */
-    protected function writeTransform($value, string|array $type)
+    protected function writeTransform($value, $type)
     {
         if (is_null($value)) {
             return;
@@ -436,22 +437,33 @@ trait Attribute
 
         if (is_array($type)) {
             [$type, $param] = $type;
-        } elseif (str_contains($type, ':')) {
+        } elseif (strpos($type, ':') !== false) { // 替换 str_contains 为 strpos
             [$type, $param] = explode(':', $type, 2);
         }
 
-        return match ($type) {
-            'integer'   =>  (int) $value,
-            'float'     =>  empty($param) ? (float) $value : (float) number_format($value, (int) $param, '.', ''),
-            'boolean'   =>  (bool) $value,
-            'timestamp' =>  !is_numeric($value) ? strtotime($value) : $value,
-            'datetime'  =>  $this->formatDateTime('Y-m-d H:i:s.u', $value, true),
-            'object'    =>  is_object($value) ? json_encode($value, JSON_FORCE_OBJECT) : $value,
-            'array'     =>  json_encode((array) $value, !empty($param) ? (int) $param : JSON_UNESCAPED_UNICODE),
-            'json'      =>  json_encode($value, !empty($param) ? (int) $param : JSON_UNESCAPED_UNICODE),
-            'serialize' =>  serialize($value),
-            default     =>  $value instanceof Stringable && str_contains($type, '\\') ? $value->__toString() : $value,
-        };
+
+        switch ($type) {
+            case 'integer':
+                return (int)$value;
+            case 'float':
+                return empty($param) ? (float)$value : (float)number_format($value, (int)$param, '.', '');
+            case 'boolean':
+                return (bool)$value;
+            case 'timestamp':
+                return !is_numeric($value) ? strtotime($value) : $value;
+            case 'datetime':
+                return $this->formatDateTime('Y-m-d H:i:s.u', $value, true);
+            case 'object':
+                return is_object($value) ? json_encode($value, JSON_FORCE_OBJECT) : $value;
+            case 'array':
+                return json_encode((array)$value, !empty($param) ? (int)$param : JSON_UNESCAPED_UNICODE);
+            case 'json':
+                return json_encode($value, !empty($param) ? (int)$param : JSON_UNESCAPED_UNICODE);
+            case 'serialize':
+                return serialize($value);
+            default:
+                return method_exists($value, '__toString') && strpos($type, '\\') !== false ? $value->__toString() : $value;
+        }
     }
 
     /**
@@ -459,18 +471,19 @@ trait Attribute
      *
      * @param string $name 名称
      *
+     * @return mixed
      * @throws InvalidArgumentException
      *
-     * @return mixed
      */
-    public function getAttr(string $name)
+    public
+    function getAttr(string $name)
     {
         try {
-            $relation   = false;
-            $value      = $this->getData($name);
+            $relation = false;
+            $value = $this->getData($name);
         } catch (InvalidArgumentException $e) {
-            $relation   = $this->isRelationAttr($name);
-            $value      = null;
+            $relation = $this->isRelationAttr($name);
+            $value = null;
         }
 
         return $this->getValue($name, $value, $relation);
@@ -479,15 +492,16 @@ trait Attribute
     /**
      * 获取经过获取器处理后的数据对象的值
      *
-     * @param string      $name     字段名称
-     * @param mixed       $value    字段值
+     * @param string $name 字段名称
+     * @param mixed $value 字段值
      * @param bool|string $relation 是否为关联属性或者关联名
      *
+     * @return mixed
      * @throws InvalidArgumentException
      *
-     * @return mixed
      */
-    protected function getValue(string $name, $value, bool|string $relation = false)
+    protected
+    function getValue(string $name, $value, $relation = false)
     {
         // 检测属性获取器
         $fieldName = $this->getRealFieldName($name);
@@ -535,12 +549,13 @@ trait Attribute
     /**
      * 获取JSON字段属性值
      *
-     * @param string $name  属性名
-     * @param mixed  $value JSON数据
+     * @param string $name 属性名
+     * @param mixed $value JSON数据
      *
      * @return mixed
      */
-    protected function getJsonValue(string $name, $value)
+    protected
+    function getJsonValue(string $name, $value)
     {
         if (is_null($value)) {
             return $value;
@@ -564,7 +579,8 @@ trait Attribute
      *
      * @return mixed
      */
-    protected function getRelationValue(string $relation)
+    protected
+    function getRelationValue(string $relation)
     {
         $modelRelation = $this->$relation();
 
@@ -574,12 +590,13 @@ trait Attribute
     /**
      * 数据读取 类型转换.
      *
-     * @param mixed        $value 值
-     * @param string|array $type  要转换的类型
+     * @param mixed $value 值
+     * @param string|array $type 要转换的类型
      *
      * @return mixed
      */
-    protected function readTransform($value, string|array $type)
+    protected
+    function readTransform($value, $type)
     {
         if (is_null($value)) {
             return;
@@ -587,7 +604,7 @@ trait Attribute
 
         if (is_array($type)) {
             [$type, $param] = $type;
-        } elseif (str_contains($type, ':')) {
+        } elseif (strpos($type, ':') !== false) { // 替换 str_contains 为 strpos
             [$type, $param] = explode(':', $type, 2);
         }
 
@@ -600,29 +617,40 @@ trait Attribute
             return $value;
         };
 
-        return match ($type) {
-            'integer'   =>  (int) $value,
-            'float'     =>  empty($param) ? (float) $value : (float) number_format($value, (int) $param, '.', ''),
-            'boolean'   =>  (bool) $value,
-            'timestamp' =>  !is_null($value) ? $this->formatDateTime(!empty($param) ? $param : $this->dateFormat, $value, true) : null,
-            'datetime'  =>  !is_null($value) ? $this->formatDateTime(!empty($param) ? $param : $this->dateFormat, $value) : null,
-            'json'      =>  json_decode($value, true),
-            'array'     =>  empty($value) ? [] : json_decode($value, true),
-            'object'    =>  empty($value) ? new \stdClass() : json_decode($value),
-            'serialize' =>  $call($value),
-            default     =>  str_contains($type, '\\') ? new $type($value) : $value,
-        };
+        switch ($type) {
+            case 'integer':
+                return (int)$value;
+            case 'float':
+                return empty($param) ? (float)$value : (float)number_format($value, (int)$param, '.', '');
+            case 'boolean':
+                return (bool)$value;
+            case 'timestamp':
+                return !is_null($value) ? $this->formatDateTime(!empty($param) ? $param : $this->dateFormat, $value, true) : null;
+            case 'datetime':
+                return !is_null($value) ? $this->formatDateTime(!empty($param) ? $param : $this->dateFormat, $value) : null;
+            case 'json':
+                return json_decode($value, true);
+            case 'array':
+                return empty($value) ? [] : json_decode($value, true);
+            case 'object':
+                return empty($value) ? new \stdClass() : json_decode($value);
+            case 'serialize':
+                return $call($value);
+            default:
+                return strpos($type, '\\') !== false ? new $type($value) : $value;
+        }
     }
 
     /**
      * 设置数据字段获取器.
      *
-     * @param string|array $name     字段名
-     * @param Closure     $callback 闭包获取器
+     * @param string|array $name 字段名
+     * @param Closure $callback 闭包获取器
      *
      * @return $this
      */
-    public function withAttr(string|array $name, Closure $callback = null)
+    public
+    function withAttr($name, Closure $callback = null)
     {
         if (is_array($name)) {
             foreach ($name as $key => $val) {
@@ -631,7 +659,7 @@ trait Attribute
         } else {
             $name = $this->getRealFieldName($name);
 
-            if (str_contains($name, '.')) {
+            if (strpos($name, '.') !== false) {
                 [$name, $key] = explode('.', $name);
 
                 $this->withAttr[$name][$key] = $callback;

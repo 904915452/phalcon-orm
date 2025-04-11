@@ -2,23 +2,26 @@
 
 namespace Dm\PhalconOrm;
 
-use Stringable;
-
 /**
  * SQL Raw.
  */
 class Raw
 {
+    protected $value;
+    protected $bind = [];
+
     /**
      * 创建一个查询表达式.
      *
-     * @param string|Stringable $value
-     * @param array  $bind
+     * @param string $value
+     * @param array $bind
      *
      * @return void
      */
-    public function __construct(protected string|Stringable $value, protected array $bind = [])
+    public function __construct($value, array $bind = [])
     {
+        $this->bind = $bind;
+        $this->value = $value;
     }
 
     /**

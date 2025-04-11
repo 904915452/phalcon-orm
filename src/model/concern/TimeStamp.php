@@ -5,7 +5,6 @@ namespace Dm\PhalconOrm\model\concern;
 
 use DateTime;
 use DateTimeInterface;
-use Stringable;
 
 /**
  * 自动时间戳.
@@ -157,11 +156,10 @@ trait TimeStamp
                 $value = $this->formatDateTime('Y-m-d H:i:s.u');
                 break;
             default:
-                if (str_contains($type, '\\')) {
+                if (false !== strpos($type, '\\')) {
                     // 对象数据写入
                     $obj = new $type();
-                    if ($obj instanceof Stringable) {
-                        // 对象数据写入
+                    if (method_exists($obj, '__toString')) { // 检查是否存在 __toString 方法
                         $value = $obj->__toString();
                     }
                 }
@@ -187,7 +185,7 @@ trait TimeStamp
 
         if (false === $format) {
             return $time;
-        } elseif (str_contains($format, '\\')) {
+        } elseif (strpos($format, '\\') !== false) {
             return new $format($time);
         }
 

@@ -162,6 +162,8 @@ INSERT INTO student_score SET name = '张三' , subject = '计算机' , score = 
 
 | 9 | 张三 | 计算机 | 60 | 1821111 |
 
+
+
 ```
 
 $db->table("student_score")

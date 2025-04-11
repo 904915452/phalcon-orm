@@ -1,5 +1,5 @@
 <?php
-declare (strict_types = 1);
+declare (strict_types=1);
 
 namespace Dm\PhalconOrm\model\concern;
 
@@ -101,12 +101,12 @@ trait Conversion
     /**
      * 设置附加关联对象的属性.
      *
-     * @param string       $attr   关联属性
+     * @param string $attr 关联属性
      * @param string|array $append 追加属性名
      *
+     * @return $this
      * @throws Exception
      *
-     * @return $this
      */
     public function appendRelationAttr(string $attr, array $append)
     {
@@ -132,7 +132,7 @@ trait Conversion
      * 设置需要附加的输出属性.
      *
      * @param array $append 属性列表
-     * @param bool  $merge  是否合并
+     * @param bool $merge 是否合并
      *
      * @return $this
      */
@@ -147,7 +147,7 @@ trait Conversion
      * 设置需要隐藏的输出属性.
      *
      * @param array $hidden 属性列表
-     * @param bool  $merge  是否合并
+     * @param bool $merge 是否合并
      *
      * @return $this
      */
@@ -162,7 +162,7 @@ trait Conversion
      * 设置需要输出的属性.
      *
      * @param array $visible
-     * @param bool  $merge   是否合并
+     * @param bool $merge 是否合并
      *
      * @return $this
      */
@@ -199,12 +199,12 @@ trait Conversion
 
         foreach ($this->visible as $key => $val) {
             if (is_string($val)) {
-                if (str_contains($val, '.')) {
-                    [$relation, $name]    = explode('.', $val);
+                if (false !== strpos($val, '.')) { // 替换 str_contains 为 strpos
+                    [$relation, $name] = explode('.', $val);
                     $visible[$relation][] = $name;
                 } else {
                     $visible[$val] = true;
-                    $hasVisible    = true;
+                    $hasVisible = true;
                 }
             } else {
                 $visible[$key] = $val;
@@ -213,8 +213,8 @@ trait Conversion
 
         foreach ($this->hidden as $key => $val) {
             if (is_string($val)) {
-                if (str_contains($val, '.')) {
-                    [$relation, $name]   = explode('.', $val);
+                if (false !== strpos($val, '.')) { // 替换 str_contains 为 strpos
+                    [$relation, $name] = explode('.', $val);
                     $hidden[$relation][] = $name;
                 } else {
                     $hidden[$val] = true;
@@ -252,7 +252,7 @@ trait Conversion
 
             if (isset($this->mapping[$key])) {
                 // 检查字段映射
-                $mapName        = $this->mapping[$key];
+                $mapName = $this->mapping[$key];
                 $item[$mapName] = $item[$key];
                 unset($item[$key]);
             }
@@ -271,19 +271,19 @@ trait Conversion
         return $item;
     }
 
-    protected function appendAttrToArray(array &$item, $key, array | string $name, array $visible, array $hidden): void
+    protected function appendAttrToArray(array &$item, $key, $name, array $visible, array $hidden): void
     {
         if (is_array($name)) {
             // 批量追加关联对象属性
-            $relation   = $this->getRelationWith($key, $hidden, $visible);
+            $relation = $this->getRelationWith($key, $hidden, $visible);
             $item[$key] = $relation ? $relation->append($name)->toArray() : [];
-        } elseif (str_contains($name, '.')) {
+        } elseif (false !== strpos($name, '.')) { // 替换 str_contains 为 strpos
             // 追加单个关联对象属性
             [$key, $attr] = explode('.', $name);
-            $relation     = $this->getRelationWith($key, $hidden, $visible);
-            $item[$key]   = $relation ? $relation->append([$attr])->toArray() : [];
+            $relation = $this->getRelationWith($key, $hidden, $visible);
+            $item[$key] = $relation ? $relation->append([$attr])->toArray() : [];
         } else {
-            $value       = $this->getAttr($name);
+            $value = $this->getAttr($name);
             $item[$name] = $value;
 
             $this->getBindAttrValue($name, $value, $item);
@@ -365,7 +365,7 @@ trait Conversion
     {
         $resultSetType = $resultSetType ?: $this->resultSetType;
 
-        if ($resultSetType && str_contains($resultSetType, '\\')) {
+        if ($resultSetType && false !== strpos($resultSetType, '\\')) {
             $collection = new $resultSetType($collection);
         } else {
             $collection = new ModelCollection($collection);

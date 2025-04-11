@@ -22,14 +22,16 @@ class Fetch
      * @var Builder
      */
     protected $builder;
+    protected $query;
 
     /**
      * 创建一个查询SQL获取对象
      *
      * @param Query $query 查询对象
      */
-    public function __construct(protected Query $query)
+    public function __construct(Query $query)
     {
+        $this->query = $query;
         $this->connection = $query->getConnection();
         $this->builder    = $this->connection->getBuilder();
     }

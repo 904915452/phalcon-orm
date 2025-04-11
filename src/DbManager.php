@@ -3,7 +3,6 @@
 namespace Dm\PhalconOrm;
 
 use Dm\PhalconOrm\model\Model;
-use Phalcon\Db\Adapter\AdapterInterface;
 
 /**
  * @method startTrans()

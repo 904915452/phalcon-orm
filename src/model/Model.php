@@ -530,7 +530,12 @@ abstract class Model extends MvcModel
      */
     public function __get($name)
     {
-        return $this->getAttr($name);
+        $data = $this->getAttr($name);
+        if (empty($data)) {
+            return parent::__get($name);
+        } else {
+            return $data;
+        }
     }
 
     /**
@@ -573,7 +578,7 @@ abstract class Model extends MvcModel
         return call_user_func_array([$model->db(), $method], $arguments);
     }
 
-    # 以下为重写phalcon基方法
+    # 以下为重写phalcon基方法 ---------------------------------------------
 
     public function readAttribute($attribute)
     {

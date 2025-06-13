@@ -14,23 +14,22 @@ class StudentModel extends \Phalcon\Mvc\Model
     public function initialize()
     {
         $this->setSource('student');
-        $this->hasMany("id", "StudentScoreModel", "student_id"); // 修改为 "StudentScoreModel"
+        $this->hasMany("id", StudentScoreModel::class, "student_id"); // 修改为 "StudentScoreModel"
     }
 }
 
 class StudentScoreModel extends \Phalcon\Mvc\Model
 {
-    public function initialize()
+    public function initialize(): void
     {
         $this->setSource('student_score');
-        $this->belongsTo("student_id", "StudentModel", "id"); // 修改为 "StudentModel"
+        $this->belongsTo("student_id", StudentModel::class, "id"); // 修改为 "StudentModel"
     }
 }
 
 // 模拟配置文件连接数据库
 $di = new FactoryDefault();
 $mysql1 = $di->setShared('db', function () {
-//    $class = 'Dm\PhalconOrm\connector\Mysql';
     $class = \Phalcon\Db\Adapter\Pdo\Mysql::class;
     $params = [
         'host' => 'host.docker.internal',
@@ -44,8 +43,11 @@ $mysql1 = $di->setShared('db', function () {
 });
 
 
-$model = new StudentModel;
-$manager = $model->getModelsManager();
+//$model = new StudentModel;
+//$manager = $model->getModelsManager();
+//$rt = $manager->executeQuery('update ' . StudentModel::class . ' set name = "test" where id = :id:', ['id' => 15]);
+//var_dump($rt);
 
-$rt = $manager->executeQuery('update ' . StudentModel::class . ' set name = "test" where id = :id:', ['id' => 15]);
-var_dump($rt);
+$data = StudentModel::findFirst(["condition" => "id = 1"]);
+var_dump($data->studentScoreModel->toArray());
+//var_dump($data->toArray());

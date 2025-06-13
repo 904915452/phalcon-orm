@@ -1,6 +1,6 @@
 <?php
 
-use Phalcon\Di\Di;
+use Phalcon\Di;
 use Phalcon\Di\FactoryDefault;
 
 require '../vendor/autoload.php';
@@ -33,14 +33,12 @@ $di->setShared('modelsManager', function () use ($di) {
     return $manage;
 });
 
-Di::setDefault($di);
-
 
 $mysql1 = $di->setShared('db', function () {
     $class = 'Dm\PhalconOrm\connector\Mysql';
     $params = [
         'host' => 'host.docker.internal',
-        'username' => 'root',
+        'username' => 'root57',
         'password' => 'root',
         'dbname' => 'test',
         'charset' => 'utf8mb4',

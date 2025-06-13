@@ -1,5 +1,5 @@
 {
-  "name": "904915452dm/phalcon_orm",
+  "name": "yu/phalcon_orm",
   "description": "phalcon-orm",
   "type": "library",
   "autoload": {
@@ -16,7 +16,8 @@
   "require": {
     "phalcon/ide-stubs": "^5.8",
     "ext-pdo": "*",
-    "ext-mbstring": "*"
+    "ext-mbstring": "*",
+    "ext-json": "*"
   },
   "config": {
     "allow-plugins": {
